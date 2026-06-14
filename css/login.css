@@ -1,12 +1,15 @@
 html {
   scroll-behavior: smooth;
 }
-
-.loginBody{
-  background-color: rgb(35, 35, 35);
+.loginBody {
+  min-height: 100vh;
+  margin: 0;
+  background:
+    radial-gradient(circle at top left, rgba(252, 70, 107, 0.35), transparent 35%),
+    radial-gradient(circle at bottom right, rgba(122, 101, 186, 0.4), transparent 35%),
+    linear-gradient(135deg, #111, #1f1f1f);
   font-family: Inter, sans-serif;
-  color:white;
-  align-items: center;
+  color: white;
 }
 
 .navbar {
@@ -72,17 +75,16 @@ html {
   width: 100%;
 }
 
-#loginContainer{
-  margin: auto; 
-  display: flex;
-  flex-direction: column;
-  background-color: transparent;
-  background: rgba(255, 243, 243, 0.632);  
-  border-radius: 15px;
-  padding: 30px;
-  align-items: center; 
-  width: 800px;
-  box-shadow: 0 4px 15px rgb(0 0 0 / 72%);;
+#loginContainer {
+  width: 420px;
+  max-width: 90%;
+  padding: 40px 35px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.55);
 }
 
 #loginHeader {
@@ -91,6 +93,8 @@ html {
     justify-content: center;
     gap: 15px; 
     width: 100%;
+    color: white;
+
 }
 
 h2 {
@@ -110,16 +114,22 @@ h2 {
     margin-left: -10px;
 }
 
+#loginContainer h2{
+    margin-bottom: 25px;
+    font-size: 34px;
+}
+
 #loginForm {
     text-align: center;
 }
 
 #userName{
-    background-color: black;
-    color:white;
-    font-size: medium;
-    border-radius: 8px;
-    padding: 5px;
+    width: 280px;
+    padding: 13px 15px;
+    border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(0, 0, 0, 0.55);
+    color: white;
+    border-radius: 12px;
 }
 
 #userName::placeholder{
@@ -128,22 +138,23 @@ h2 {
 
 #userName:focus{
     outline: none;
-    border-color: rgb(60, 205, 12);
-    box-shadow: 0 1px 4px #18580e inset, 0 3px 20px 2px #104e08 !important;
+    border-color: #fc466b;
+    box-shadow: 0 0 0 3px rgba(252, 70, 107, 0.25);
 }
 
 #password{
-    background-color: black;
-    color:white;
-    font-size: medium;
-    border-radius: 8px;
-    padding: 5px;
+    width: 280px;
+    padding: 13px 15px;
+    border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(0, 0, 0, 0.55);
+    color: white;
+    border-radius: 12px;
 }
 
 #password:focus{
     outline: none;
-    border-color: rgb(60, 205, 12);
-    box-shadow: 0 1px 4px #18580e inset, 0 3px 20px 2px #104e08 !important;
+    border-color: #fc466b;
+    box-shadow: 0 0 0 3px rgba(252, 70, 107, 0.25);
 }
 
 #password::placeholder{
@@ -159,29 +170,37 @@ h2 {
 }
 
 #submit{
-    background-color: black;
-    color:white;
-    font-size: medium;
-    border-radius: 8px;
-    padding: 10px;
-    width: 100px;
+    width: 100%;
+    max-width: 280px;
+    border: none;
+    border-radius: 12px;
+    padding: 13px;
+    background: linear-gradient(135deg, #7a65ba, #a61930, #fc466b);
+    color: white;
+    font-weight: 700;
+    cursor: pointer;
 }
 
 #submit:hover{
-    filter:brightness(0.5);
+    filter: brightness(1.15);
+    transform: translateY(-2px);
 }
 
 #submitAccnt{
-    background-color: black;
-    color:white;
-    font-size: medium;
-    border-radius: 8px;
-    padding: 10px;
-    width: 150px;
+    width: 100%;
+    max-width: 280px;
+    border: none;
+    border-radius: 12px;
+    padding: 13px;
+    background: linear-gradient(135deg, #7a65ba, #a61930, #fc466b);
+    color: white;
+    font-weight: 700;
+    cursor: pointer;
 }
 
 #submitAccnt:hover{
-    filter:brightness(0.5);
+    filter: brightness(1.15);
+    transform: translateY(-2px);
 }
 
 #feature-heading{

@@ -89,7 +89,7 @@ router.get("/login", (req,res) => {
                             <input type="password" id="password" name="password" placeholder="Password" required><br><br>
                             <input type="submit" id="submit" value="Sign In">
                         </form>
-                        <p style="margin-top: 24px;">Don't have an account? Create one <a href="/users/register" id="hereBtn">here</a></p>
+                        <p style="margin-top: 24px; text-align: center;">Don't have an account? Create one <a href="/users/register" id="hereBtn">here</a></p>
                     </div>
                 </div>
                 <!--
@@ -187,7 +187,7 @@ router.get("/register", (req, res) => {
                                 <input type="password" id="password" name="password" placeholder="Password" required><br><br>
                                 <input type="submit" id="submitAccnt" value="Create Account">
                             </form>
-                            <p style="color: white; margin-top: 15px;">
+                            <p style="color: white; margin-top: 15px; text-align: center;">
                                 Already have an account? <a href="/users/login" style="color: #dfd327;">Login</a>
                             </p>
                         </div>
