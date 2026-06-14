@@ -1177,6 +1177,7 @@ button{
 
 #prev:hover{
   cursor: pointer;
+  color:red;
 }
 
 #day-display{
@@ -1193,6 +1194,7 @@ button{
 
 #next:hover{
   cursor: pointer;
+  color:red;
 }
 
 .time-slot {

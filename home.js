@@ -1206,14 +1206,14 @@ app.get("/airing", async (req,res)=>{
                     <div class="airHeaders">
                         <h1 style="text-align: center; color: red;  animation: dropIn 0.4s ease-out forwards;">Airing Today</h1>
                         <h2 style="color: grey; font-size: 0.8rem; text-align:center">
-                        Showing schedule for ${country}
+                        <i class="fa-solid fa-location-dot" style="color:red; margin-right: 2px;"></i> Showing schedule for ${country}
                         </h2>
                     </div>
                     <h2><i>Check TBA section for other shows located all the way down</i></h2>
                     <div id="air-controls">
-                        <button id="prev"><</button>
+                        <button id="prev"><i class="fa-solid fa-arrow-left"></i></button>
                         <h2 id="day-display"></h2>
-                        <button id="next">></button>
+                        <button id="next"><i class="fa-solid fa-arrow-right"></i></button>
                     </div>
                 </div>
                 <div class="airInfo">
