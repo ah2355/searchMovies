@@ -253,7 +253,7 @@ app.get('/', async (req,res) => {
                     <main class="main-content">
                         <div id="movieBody">
                             <div id="announcements">
-                                <p>There are some issues when acessing anime movies in the Anime Page, we are working on it</p>
+                                <p></p>
                             </div>
 
                             <div class="content-bg">
@@ -534,7 +534,7 @@ app.get('/', async (req,res) => {
         const rating = anime.averageScore ? (anime.averageScore / 10).toFixed(1) : "N/A";
         const searchTitle = anime.title.english || anime.title.romaji || "";
         const cleanTitle = searchTitle.replace(/season\s*\d+/i, '').replace(/[-–—:]/g, ' ').replace(/\s+/g, ' ').trim();
-        const href = `/anime-go?title=${encodeURIComponent(cleanTitle)}&aniId=${anime.id}`;
+        const href = `/anime-go?title=${encodeURIComponent(cleanTitle).replace(/'/g, '%27')}&aniId=${anime.id}`;
  
         html += `
             <div class="popular-movie-card" onclick="window.location.href='${href}'">
@@ -579,7 +579,7 @@ app.get('/', async (req,res) => {
         }
         const searchTitle = anime.title.english || anime.title.romaji || "";
         const cleanTitle = searchTitle.replace(/season\s*\d+/i, '').replace(/[-–—:]/g, ' ').replace(/\s+/g, ' ').trim();
-        const href = `/anime-go?title=${encodeURIComponent(cleanTitle)}&aniId=${anime.id}`;        
+        const href = `/anime-go?title=${encodeURIComponent(cleanTitle).replace(/'/g, '%27')}&aniId=${anime.id}`;        
         html += `
             <div class="popular-movie-card" onclick="window.location.href='${href}'">
                 <div class="popular-poster-container">
@@ -649,10 +649,9 @@ app.use("/favorites",redirectLogin, favoritesRouter);
 const mediaRouter = require("./routes/media");
 app.use("/media", mediaRouter);
 
-
-app.get("/results", async (req,res) => {
+app.get("/results", async (req, res) => {
     const isGuest = !(req.session && req.session.userId);
-    const searchMovie = req.query.q ? req.query.q.trim(): "";
+    const searchMovie = req.query.q ? req.query.q.trim() : "";
     const api_key = process.env.TMDB_API_KEY;
     const page = Number(req.query.page) || 1;
     const searchLang = req.query.language || "";
@@ -665,11 +664,13 @@ app.get("/results", async (req,res) => {
         return res.redirect(`/discover?${params}`);
     }
 
-    try{
+    try {
         let movies = [];
         let totalPages = 1;
+        let hasNext = false;
+        let totalApprox = false;
 
-       if (searchLang) {
+        if (searchLang) {
             const movieUrl = `https://api.themoviedb.org/3/discover/movie?api_key=${api_key}&with_original_language=${searchLang}&with_text_query=${encodeURIComponent(searchMovie)}&page=${page}&sort_by=popularity.desc&include_adult=${allowAdult}`;
             const tvUrl = `https://api.themoviedb.org/3/discover/tv?api_key=${api_key}&with_original_language=${searchLang}&with_text_query=${encodeURIComponent(searchMovie)}&page=${page}&sort_by=popularity.desc&include_adult=${allowAdult}`;
 
@@ -677,57 +678,98 @@ app.get("/results", async (req,res) => {
                 fetch(movieUrl, { method: 'GET', headers: { accept: 'application/json' } }),
                 fetch(tvUrl, { method: 'GET', headers: { accept: 'application/json' } })
             ]);
-
             const [movieData, tvData] = await Promise.all([movieRes.json(), tvRes.json()]);
 
             totalPages = Math.max(movieData.total_pages || 1, tvData.total_pages || 1);
+            hasNext = page < totalPages;
             movies = [
                 ...(movieData.results || []).map(m => ({ ...m, media_type: 'movie' })),
                 ...(tvData.results || []).map(m => ({ ...m, media_type: 'tv' }))
             ];
         }
         else {
-            const allowAdult = req.session.nsfw === true;
-            const apiUrl = `https://api.themoviedb.org/3/search/multi?api_key=${api_key}&query=${encodeURIComponent(searchMovie)}&include_adult=${allowAdult}&page=${page}`;
-            const apiRes = await fetch(apiUrl, { method: 'GET', headers: { accept: 'application/json' } });
-            if (!apiRes.ok) return res.status(apiRes.status).send(`<h2>API Error: Status ${apiRes.status}</h2>`);
+            // Multi search. Accumulate from TMDB page 1, filter people, dedupe the
+            // whole list, then slice this display page's window -> each unique item
+            // appears on exactly ONE page (no cross-page duplicates).
+            const PER_PAGE = 20;
+            const FETCH_CAP = 25;
+            const need = page * PER_PAGE;
+            const seen = new Set();
+            const collected = [];
+            let tmdbPage = 1;
+            let tmdbTotalPages = 1;
+            let moreTmdbPages = true;
+            let firstRaw = 0, firstFiltered = 0;
 
-            const apiData = await apiRes.json();
-            totalPages = apiData.total_pages || 1;
-            movies = (apiData.results || []).filter(item => item.media_type === "movie" || item.media_type === "tv");
+            while (moreTmdbPages && tmdbPage <= FETCH_CAP) {
+                // Stop early only if the full set is too big to count AND we already
+                // have enough for this display page.
+                if (tmdbTotalPages > FETCH_CAP && collected.length >= need + 1) break;
+
+                const apiUrl = `https://api.themoviedb.org/3/search/multi?api_key=${api_key}&query=${encodeURIComponent(searchMovie)}&include_adult=${allowAdult}&page=${tmdbPage}`;
+                const apiRes = await fetch(apiUrl, { method: 'GET', headers: { accept: 'application/json' } });
+                if (!apiRes.ok) break;
+                const apiData = await apiRes.json();
+                tmdbTotalPages = apiData.total_pages || 1;
+
+                const raw = (apiData.results || []);
+                let filteredThisPage = 0;
+                for (const item of raw) {
+                    if (item.media_type !== "movie" && item.media_type !== "tv") continue;
+                    filteredThisPage++;
+                    const key = item.media_type + ':' + item.id;
+                    if (seen.has(key)) continue;
+                    seen.add(key);
+                    collected.push(item);
+                }
+                if (tmdbPage === 1) { firstRaw = raw.length; firstFiltered = filteredThisPage; }
+
+                moreTmdbPages = tmdbPage < tmdbTotalPages;
+                tmdbPage++;
+            }
+
+            const startIdx = (page - 1) * PER_PAGE;
+            movies = collected.slice(startIdx, startIdx + PER_PAGE);
+
+            if (!moreTmdbPages) {
+                totalPages = Math.max(1, Math.ceil(collected.length / PER_PAGE));
+                totalApprox = false;
+            } else {
+                const ratio = firstRaw > 0 ? (firstFiltered / firstRaw) : 1;
+                const estRealResults = tmdbTotalPages * 20 * ratio;
+                totalPages = Math.min(500, Math.max(1, Math.ceil(estRealResults / PER_PAGE)));
+                totalApprox = true;
+            }
+
+            hasNext = page < totalPages && movies.length > 0;
         }
-
 
         const [favorites, watchlist] = await Promise.all([
             fetchFavoritesFromDB(req.session.userId),
             fetchWatchlistFromDB(req.session.userId)
         ]);
-
         const favoriteIds = favorites.map(f => String(f.imdbId).trim());
         const watchlistIds = watchlist.map(w => String(w.imdbId).trim());
 
         html = `
-        <!DOCTYPE html> 
+        <!DOCTYPE html>
         <html>
             <head>
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <title>Result</title>
                 <meta name="description" content="Search, discover, and track your favorite movies and TV shows. Find reviews and streaming providers with SearchMovie.">
-                
                 <meta property="og:title" content="SearchMovie - Movie & TV Discovery">
                 <meta property="og:description" content="Discover, search, and track your favorite movies and TV shows with real-time Rotten Tomatoes scores.">
                 <meta property="og:image" content="https://searchmovie.win/images/icon.png">
                 <meta property="og:url" content="https://searchmovie.win">
                 <meta property="og:type" content="website">
-
                 <meta name="twitter:card" content="summary_large_image">
                 <meta name="twitter:title" content="SearchMovie - Movie & TV Discovery">
                 <meta name="twitter:description" content="Discover, search, and track your favorite movies and TV shows.">
                 <meta name="twitter:image" content="https://searchmovie.win/images/icon.png">
-                
                 <link rel="icon" type="image/png" href="https://searchmovie.win/images/icon.png">
                 <link rel="apple-touch-icon" href="https://searchmovie.win/images/icon.png">
-                <link rel = "stylesheet" href= "/css/style.css">
+                <link rel="stylesheet" href="/css/style.css">
                 <link rel="icon" type="image/x-icon" href="/images/icon.png">
                 <link rel="preconnect" href="https://image.tmdb.org">
                 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -738,10 +780,10 @@ app.get("/results", async (req,res) => {
             <body>
                 <nav class="navbar2">
                     <span class="nav-title2">Search Results</span>
-                    <div class="nav-links2"> 
+                    <div class="nav-links2">
                     <a id="elemNav" href="/" class="nav-item">Home</a>
                     <a href="/favorites" class="nav-item">Favorites</a>
-                    <form id="searchForm" action="/results" method = "get">
+                    <form id="searchForm" action="/results" method="get">
                         <input type="text" name="q" id="movieName" placeholder="Search">
                         <button id="searchBtn"><img id="srchImg2" src="images/search-symbol-wbg.png" alt="Search"></button>
                     </form>
@@ -751,7 +793,7 @@ app.get("/results", async (req,res) => {
         `;
 
         if (movies.length === 0) {
-            html += ` 
+            html += `
             </div> <!-- close movie-grid -->
             <div style="display:flex; justify-content:center; align-items:center; height:60vh;">
                 <h2 style="color:white; text-align:center;">No matches found for your filter criteria.</h2>
@@ -763,55 +805,46 @@ app.get("/results", async (req,res) => {
                 const releaseYear = dateString ? dateString.substring(0, 4) : "N/A";
                 const rating = (movie.vote_average && !isNaN(movie.vote_average)) ? Number(movie.vote_average).toFixed(1) : "N/A";
                 const posterPath = movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : 'images/icon.png';
-                let type = movie.media_type;
-                if(type === "movie"){
-                    type = "Movie";
-                } else if (type === "tv"){
-                    type = "TV"
-                }
+
                 let genreText = "Unknown";
                 if (movie.genre_ids && movie.genre_ids.length > 0) {
                     const names = movie.genre_ids.map(id => globalGenreMap[id]).filter(Boolean);
                     if (names.length > 0) genreText = names.join(", ");
                 }
-                let ageCertificate = "PG-13"; // Default
 
-                const rRatedGenres = [27, 80, 53]; // Horror, Crime, Thriller
+                let ageCertificate = "PG-13";
+                const rRatedGenres = [27, 80, 53];
                 const isMatureGenre = movie.genre_ids && movie.genre_ids.some(id => rRatedGenres.includes(id));
-
-                const familyGenres = [16, 10751]; // Animation, Family
+                const familyGenres = [16, 10751];
                 const isFamilyGenre = movie.genre_ids && movie.genre_ids.some(id => familyGenres.includes(id));
+                if (isMatureGenre) ageCertificate = "R";
+                else if (isFamilyGenre) ageCertificate = "PG";
+                else if (movie.genre_ids && movie.genre_ids.includes(10749)) ageCertificate = "PG-13";
 
-                if (isMatureGenre) {
-                    ageCertificate = "R";
-                } else if (isFamilyGenre) {
-                    ageCertificate = "PG"; // Animation/Family movies are usually G or PG
-                } else if (movie.genre_ids && movie.genre_ids.includes(10749)) { // Romance
-                    ageCertificate = "PG-13";
-                }
                 const certClass = ageCertificate.replace(/[^a-zA-Z0-9]/g, '-');
                 const escapedTitle = movieTitle.replace(/'/g, "\\'");
                 const escapedGenres = genreText.replace(/'/g, "\\'");
                 const isFav = favoriteIds.includes(String(movie.id).trim()) ? 'active' : '';
                 const displayType = (movie.media_type === "tv") ? "TV Series" : "Movie";
                 const isWatchlisted = watchlistIds.includes(String(movie.id).trim()) ? 'active' : '';
+                const mtype = movie.media_type || 'movie';
 
                 html += `
-                    <div class="movie-card" onclick="window.location.href='/media/${movie.media_type || normalizedType}/${movie.id}${nsfwFlag}'">
-                        <div class="poster-container"> 
+                    <div class="movie-card" onclick="window.location.href='/media/${mtype}/${movie.id}${nsfwFlag}'">
+                        <div class="poster-container">
                         <span class="cert-badge ${certClass}">${ageCertificate}</span>
                         <img src="${posterPath}" alt="movie poster">
                     </div>
-                    
+
                     <h3>${movieTitle}</h3>
                     <p>Year: ${releaseYear || "N/A"}</p>
                     <p><strong>Genre:</strong> ${genreText}</p>
                     <p><strong>Rating:</strong> ${rating}</p>
-                    
+
                     <div class="movie-card-bottom-bar">
                         <p><strong>Type:</strong> ${displayType}</p>
                         <div id="int-btns">
-                            <button class="watchlist-btn ${isWatchlisted}" onclick="event.stopPropagation(); addWatchlist(this, '${escapedTitle}', '${releaseYear}', '${movie.id}', '${escapedGenres}', '${rating}', '${posterPath}', '${ageCertificate}', '${movie.media_type || normalizedType}')">
+                            <button class="watchlist-btn ${isWatchlisted}" onclick="event.stopPropagation(); addWatchlist(this, '${escapedTitle}', '${releaseYear}', '${movie.id}', '${escapedGenres}', '${rating}', '${posterPath}', '${ageCertificate}', '${mtype}')">
                                 <span class="eye-icon"></span>
                             </button>
                             <button class="heart-btn ${isFav}" onclick="event.stopPropagation(); addFavorite(this, '${escapedTitle}', '${releaseYear}', '${movie.id}', '${escapedGenres}', '${rating}', '${posterPath}', '${ageCertificate}')">
@@ -824,42 +857,31 @@ app.get("/results", async (req,res) => {
             }
         }
 
-        
-        
         html += `
             </div>
             <div id="cntrl-btn">
                 ${page > 1 ? `<a href="/results?q=${encodeURIComponent(searchMovie)}&page=${page - 1}" id="showLess">Previous</a>` : ''}
-                <span id="txtPage">Page ${page} of ${totalPages}</span>
-                ${page < totalPages ? `<a href="/results?q=${encodeURIComponent(searchMovie)}&page=${page + 1}" id="showMore">Next</a>` : ''}
+                <span id="txtPage">Page ${page} of ${totalApprox ? '~' : ''}${totalPages}</span>
+                ${hasNext ? `<a href="/results?q=${encodeURIComponent(searchMovie)}&page=${page + 1}" id="showMore">Next</a>` : ''}
             </div>
             <script>
                 const isGuest = ${isGuest};
 
                 async function addFavorite(btn, title, year, imdbId, genres, rating, image, certification) {
-        
                     if (isGuest) {
                         alert("Please log in to add favorites!");
                         window.location.href = "/users/login";
                         return;
                     }
-
                     const isActive = btn.classList.toggle('active');
-                    
-                    // Send all data that the schema expects
                     await fetch("/favorites/add", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ 
-                            title, year, imdbId, genres, rating, image, certification 
-                        })
+                        body: JSON.stringify({ title, year, imdbId, genres, rating, image, certification })
                     });
-
-                    if (isActive) {
-                        console.log(title + " toggled (added/removed) in favorites!");
-                    }
+                    if (isActive) console.log(title + " toggled (added/removed) in favorites!");
                 }
-                
+
                 async function addWatchlist(btn, title, year, imdbId, genres, rating, image, certification, mediaType) {
                     if (isGuest) {
                         alert("Please log in to use watchlist!");
@@ -870,14 +892,12 @@ app.get("/results", async (req,res) => {
                     await fetch("/watchlist/add", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ title, year, imdbId, genres, rating, image, certification, mediaType})
+                        body: JSON.stringify({ title, year, imdbId, genres, rating, image, certification, mediaType })
                     });
                 }
 
                 window.addEventListener('pageshow', function(event) {
-                    if (event.persisted) {
-                        window.location.reload();
-                    }
+                    if (event.persisted) window.location.reload();
                 });
             </script>
             </body>
@@ -885,7 +905,7 @@ app.get("/results", async (req,res) => {
         `;
 
         return res.send(html);
-    } catch(err){
+    } catch (err) {
         return res.status(500).send("Error reading data.");
     }
 });
@@ -1502,7 +1522,7 @@ app.get("/anime", async (req, res) => {
                         const searchTitle = item.title.english || item.title.romaji || title;
                         const cleanTitle = searchTitle.replace(/season\s*\d+/i,'').replace(/[-–—:]/g,' ').replace(/\s+/g,' ').trim();
                         return `
-                        <div class="movie-card" onclick="window.location.href='/anime-go?title=${encodeURIComponent(cleanTitle)}&aniId=${item.id}'">
+                        <div class="movie-card" onclick="window.location.href='/anime-go?title=${encodeURIComponent(cleanTitle).replace(/'/g, '%27')}&aniId=${item.id}'">
                             <div class="poster-container">
                                 <span class="cert-badge PG">EP ${ep}</span>
                                 <img src="${poster}" alt="${title}">
@@ -1527,7 +1547,7 @@ app.get("/anime", async (req, res) => {
             const searchTitle = item.title.english || item.title.romaji || title;
             const cleanTitle = searchTitle.replace(/season\s*\d+/i, '').replace(/[-–—:]/g, ' ').replace(/\s+/g, ' ').trim();
             const year = item.startDate?.year || '';
-            const href = `/anime-go?title=${encodeURIComponent(cleanTitle)}${year ? '&year=' + year : ''}&aniId=${item.id}`;
+            const href = `/anime-go?title=${encodeURIComponent(cleanTitle).replace(/'/g, '%27')}${year ? '&year=' + year : ''}&aniId=${item.id}${isMovie ? '&type=movie' : ''}`;
             const isFav = favoriteIds.includes(String(item.idMal)) ? 'active' : '';
             const isWatchlisted = watchlistIds.includes(String(item.idMal)) ? 'active' : '';
             const mediaTypeLabel = isMovie ? 'Movie' : 'TV Series';
@@ -1601,37 +1621,61 @@ app.get("/anime", async (req, res) => {
     res.send(html);
 });
 
+
 app.get("/anime-go", async (req, res) => {
     const api_key = process.env.TMDB_API_KEY;
-    const title = (req.query.title || "").trim();
+    const rawTitle = (req.query.title || "").trim();
     const year = req.query.year || "";
-    const aniId = req.query.aniId || "";   // <-- the specific season's AniList id
-    if (!title) return res.redirect('/');
-
+    const aniId = req.query.aniId || "";
+    const isMovie = req.query.type === 'movie';   // <-- new: movie vs tv
+    if (!rawTitle) return res.redirect('/');
+ 
+    const mediaType = isMovie ? 'movie' : 'tv';
+    const dateField = isMovie ? 'primary_release_year' : 'first_air_date_year';
+ 
+    const norm = s => s.replace(/['’]/g, '').replace(/\s+/g, ' ').trim();
+ 
+    // Progressive title candidates (full, then trimmed) so multi-part / long
+    // titles still match the base TMDB entry.
+    const candidates = [];
+    const base = norm(rawTitle);
+    candidates.push(base);
+    const cutWords = base.split(' ');
+    if (cutWords.length > 3) candidates.push(cutWords.slice(0, 3).join(' '));
+    if (cutWords.length > 2) candidates.push(cutWords.slice(0, 2).join(' '));
+ 
+    async function searchTMDB(q, useYear) {
+        let url = `https://api.themoviedb.org/3/search/${mediaType}?api_key=${api_key}&query=${encodeURIComponent(q)}`;
+        if (useYear && year) url += `&${dateField}=${year}`;
+        try {
+            const r = await fetch(url);
+            const d = await r.json();
+            return d.results || [];
+        } catch { return []; }
+    }
+ 
     try {
-        let url = `https://api.themoviedb.org/3/search/tv?api_key=${api_key}&query=${encodeURIComponent(title)}`;
-        if (year) url += `&first_air_date_year=${year}`;
-        let r = await fetch(url);
-        let d = await r.json();
-        let results = d.results || [];
-        if (results.length === 0 && year) {
-            const r2 = await fetch(`https://api.themoviedb.org/3/search/tv?api_key=${api_key}&query=${encodeURIComponent(title)}`);
-            const d2 = await r2.json();
-            results = d2.results || [];
+        let hit = null;
+        for (const cand of candidates) {
+            let results = await searchTMDB(cand, true);
+            if (!results.length) results = await searchTMDB(cand, false);
+            if (results.length) {
+                hit = results.find(x => x.original_language === 'ja') || results[0];
+                if (hit) break;
+            }
         }
-        const hit = results.find(x => x.original_language === 'ja') || results[0];
+ 
         if (hit) {
             const nsfwFlag = req.session.nsfw ? 'nsfw=true' : '';
-            // thread aniId so the media page uses the exact AniList entry the user clicked
             const params = [aniId ? 'aniId=' + aniId : '', nsfwFlag].filter(Boolean).join('&');
-            return res.redirect(`/media/tv/${hit.id}${params ? '?' + params : ''}`);
+            return res.redirect(`/media/${mediaType}/${hit.id}${params ? '?' + params : ''}`);
         }
-        return res.redirect(`/results?q=${encodeURIComponent(title)}`);
+        return res.redirect(`/results?q=${encodeURIComponent(rawTitle)}`);
     } catch (err) {
-        return res.redirect(`/results?q=${encodeURIComponent(title)}`);
+        return res.redirect(`/results?q=${encodeURIComponent(rawTitle)}`);
     }
 });
-
+ 
 app.get("/toggle-nsfw", (req, res) => {
     req.session.nsfw = !req.session.nsfw;
     res.redirect(req.get('referer') || '/');

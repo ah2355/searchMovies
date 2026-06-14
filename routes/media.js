@@ -524,10 +524,10 @@ router.get("/:type/:id", async (req, res) => {
                 }
 
                 // Build the COMPLETE season chain (all seasons, ordered) for navigation buttons.
-                // Only when we resolved a definite AniList entry via aniId — avoids extra API
-                // calls on non-anime-card arrivals. Single-entry shows return just themselves
-                // (so One Piece shows no extra seasons and nothing can break).
-                if (aniIdParam && media?.id) {
+                // Build it whenever we resolved ANY AniList entry — not just aniId arrivals — so
+                // search/trending arrivals also get prequel/sequel navigation. Single-entry shows
+                // return just themselves (so One Piece shows no extra seasons and nothing breaks).
+                if (media?.id) {
                     relatedSeasons = await buildSeasonChain(media.id);
                 }
                 console.log(`AniList ID for ${title}:`, anilistId, '| episodes:', anilistEpisodeCount, '| thumbs:', streamingEpisodes.length, '| seasonsInChain:', relatedSeasons.length);
@@ -585,7 +585,7 @@ router.get("/:type/:id", async (req, res) => {
         const nsfwQS = (req.query.nsfw === 'true' || req.session.nsfw) ? '&nsfw=true' : '';
         const relatedSeasonsHtml = (isAnime && relatedSeasons.length > 1) ? `
             <h3 class="overview-heading">Seasons</h3>
-            <div class="related-seasons" style="display:flex; gap:14px; overflow-x:auto; padding:6px 2px 14px;">
+            <div class="related-seasons">
                 ${relatedSeasons.map(rs => `
                     <a href="/media/tv/${id}?aniId=${rs.id}${nsfwQS}"
                        style="flex:0 0 auto; width:120px; text-decoration:none; color:white;
