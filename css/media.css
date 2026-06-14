@@ -1,10 +1,14 @@
+html, body {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
 body{
   background-color: rgb(35, 35, 35);
   font-family: Inter, sans-serif;
   scroll-behavior: smooth;
   
 }
-
 .navbar {
   display: flex;
   justify-content: space-between; 
@@ -666,9 +670,9 @@ body{
     .details-container {
         flex-direction: column;
         text-align: center;
-        align-items: flex-start;
+        align-items: center;
         padding: 25px;
-        gap: 30px;
+        gap: 3px;
     }
 
     .details-right {
@@ -714,5 +718,92 @@ body{
     .secret-link {
         font-size: 0.85rem;    
         padding: 8px 10px;
+    }
+}
+
+@media (max-width: 850px) {
+    .details-title {
+        margin-left: 0;
+        text-align: center;
+        font-size: 1.8rem;
+    }
+ 
+    #player-content {
+        width: 95%;
+        padding: 16px;
+        max-height: 92vh;
+    }
+ 
+
+    .video-container,
+    #vidlink-player {
+        width: 100%;
+        max-width: 100%;
+    }
+    #vidlink-player iframe,
+    .video-container iframe {
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        height: auto;
+        border: 0;
+    }
+ 
+    
+    .restrict-container {
+        width: 90%;
+        max-width: 650px;
+        margin-top: 120px;
+        box-sizing: border-box;
+    }
+}
+ 
+@media (max-width: 480px) {
+    .details-container {
+        padding: 16px;
+    }
+ 
+    .details-title {
+        font-size: 1.5rem;
+        margin-bottom: 18px;
+    }
+ 
+    .details-overview {
+        font-size: 1rem;
+    }
+ 
+    .overview-heading {
+        font-size: 1.2rem;
+    }
+ 
+    #episode-grid {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 8px;
+        max-height: 300px;
+    }
+ 
+    #player-content {
+        padding: 12px;
+    }
+ 
+    #player-title {
+        font-size: 14px;
+    }
+ 
+    #season-episode-box,
+    #server-box {
+        gap: 8px;
+    }
+ 
+    #season-select {
+        width: 100%;
+    }
+ 
+    .trailer-btn {
+        padding: 14px;
+        font-size: 0.9rem;
+    }
+ 
+    .restrict-container {
+        margin-top: 80px;
     }
 }

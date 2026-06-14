@@ -776,6 +776,7 @@ app.get("/results", async (req, res) => {
                 <link rel="preconnect" href="https://cdnjs.cloudflare.com">
                 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
                 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+                <script src="/misc/navMobile.js" defer></script>
             </head>
             <body>
                 <nav class="navbar2">
@@ -1013,6 +1014,7 @@ app.get("/discover", async(req, res) => {
                 <link rel="preconnect" href="https://cdnjs.cloudflare.com">
                 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
                 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+                <script src="/misc/navMobile.js" defer></script>
 
             </head>
             <body>
@@ -1189,6 +1191,7 @@ app.get("/airing", async (req,res)=>{
             <link rel="preconnect" href="https://cdnjs.cloudflare.com">
             <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+            <script src="/misc/navMobile.js" defer></script>
         </head>
         <body class="air-td-body">
             <nav class="navbar2">
@@ -1448,6 +1451,7 @@ app.get("/anime", async (req, res) => {
             <link rel="preconnect" href="https://fonts.googleapis.com">
             <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+            <script src="/misc/navMobile.js" defer></script>
         </head>
         <body>
             <nav class="navbar2">
@@ -1461,20 +1465,18 @@ app.get("/anime", async (req, res) => {
                 </div>
             </nav>
             
-            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; padding:77px 20px 0; margin-bottom: 13px;">
-                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <div id="anime-choice-bar">
+                <div id="choice-barBtn">
                     ${filters.map(f => `
                         <a href="/anime?filter=${f.id}${safeGenre ? '&genre=' + encodeURIComponent(safeGenre) : ''}${allowAdult ? '&nsfw=true' : ''}"
-                        style="background:${filter === f.id ? '#e50914' : '#2a2a2a'}; color:white;
-                            padding:8px 16px; border-radius:8px; text-decoration:none; font-size:14px;">
+                        style="background:${filter === f.id ? '#e50914' : '#2a2a2a'};">
                         ${f.label}
                     </a>`).join('')}
                 </div>
 
-                <div style="display:flex; align-items:center; gap:8px;">
+                <div id="filterBox">
                     <i class="fa-solid fa-sliders" style="color:#aaa;"></i>
-                    <select onchange="window.location.href='/anime?filter=${filter}${allowAdult ? '&nsfw=true' : ''}' + (this.value ? '&genre=' + encodeURIComponent(this.value) : '')"
-                        style="background:#2a2a2a; color:white; padding:8px 16px; border-radius:8px; border:1px solid #444; font-size:14px; cursor:pointer;">
+                    <select id="filterBtn" onchange="window.location.href='/anime?filter=${filter}${allowAdult ? '&nsfw=true' : ''}' + (this.value ? '&genre=' + encodeURIComponent(this.value) : '')">
                         <option value="">Filter Genres</option>
                         ${genres.map(g => `<option value="${g}" ${safeGenre === g ? 'selected' : ''}>${g}</option>`).join('')}
                     </select>
@@ -1482,7 +1484,7 @@ app.get("/anime", async (req, res) => {
             </div>
 
             ${isAiring ? `
-                <div style="display:flex; gap:6px; align-items:center; padding: 0 20px;">
+                <div id="viewOption-box">
                     <a href="/anime?filter=airing&view=grid&page=${page}${safeGenre ? '&genre=' + encodeURIComponent(safeGenre) : ''}${allowAdult ? '&nsfw=true' : ''}"
                     style="background:${view === 'grid' ? '#e50914' : '#2a2a2a'}; color:white; padding:8px 14px; border-radius:8px; text-decoration:none; font-size:13px;">
                     <i class="fa-solid fa-grip"></i> Grid View
@@ -1697,6 +1699,7 @@ app.get("/my-watchlist", redirectLogin, async (req, res) => {
             <link rel="preconnect" href="https://cdnjs.cloudflare.com">
             <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+            <script src="/misc/navMobile.js" defer></script>
         </head>
         <body>
             <nav class="navbar2">
