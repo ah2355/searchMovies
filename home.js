@@ -82,6 +82,11 @@ const globalGenreMap = {
 };
 let animeCacheData = null;
 let animeCacheTime = 0;
+let trendingAnimeCache = [];
+let trendingAnimeCacheTime = 0;
+let airingAnimeCache = [];
+let airingAnimeCacheTime = 0;
+const ANIME_ROW_CACHE_MS = 1000 * 60 * 10; 
 const ANIME_CACHE_MS = 1000 * 60 * 30;
 
 app.get('/', async (req,res) => {
@@ -131,11 +136,20 @@ app.get('/', async (req,res) => {
             body: JSON.stringify({ query: trendingQuery })
         });
         const td = await tr.json();
-        trendingAnime = td.data?.Page?.media || [];
+        const fetched = td.data?.Page?.media || [];
+        if (fetched.length) {
+            trendingAnime = fetched;
+            trendingAnimeCache = fetched;          // remember last good
+            trendingAnimeCacheTime = Date.now();
+        } else if (Date.now() - trendingAnimeCacheTime < ANIME_ROW_CACHE_MS) {
+            trendingAnime = trendingAnimeCache;    // fall back to cache
+        }
     } catch (err) {
         console.log('Trending anime fetch failed:', err.message);
+        if (Date.now() - trendingAnimeCacheTime < ANIME_ROW_CACHE_MS) {
+            trendingAnime = trendingAnimeCache;    // fall back to cache on error
+        }
     }
-
        
     
     const seen = new Set();
@@ -203,9 +217,19 @@ app.get('/', async (req,res) => {
             body: JSON.stringify({ query: airingQuery })
         });
         const ad = await ar.json();
-        airingAnime = ad.data?.Page?.media || [];
+        const fetched = ad.data?.Page?.media || [];
+        if (fetched.length) {
+            airingAnime = fetched;
+            airingAnimeCache = fetched;            // remember last good
+            airingAnimeCacheTime = Date.now();
+        } else if (Date.now() - airingAnimeCacheTime < ANIME_ROW_CACHE_MS) {
+            airingAnime = airingAnimeCache;        // fall back to cache
+        }
     } catch (err) {
         console.log('Airing anime fetch failed:', err.message);
+        if (Date.now() - airingAnimeCacheTime < ANIME_ROW_CACHE_MS) {
+            airingAnime = airingAnimeCache;        // fall back to cache on error
+        }
     }
     const firstBackdrop = moviesData.results?.find(m => m.backdrop_path)?.backdrop_path;
         

@@ -585,7 +585,7 @@ router.get("/:type/:id", async (req, res) => {
         const nsfwQS = (req.query.nsfw === 'true' || req.session.nsfw) ? '&nsfw=true' : '';
         const relatedSeasonsHtml = (isAnime && relatedSeasons.length > 1) ? `
             <h3 class="overview-heading">Seasons</h3>
-            <div class="related-seasons">
+            <div class="related-seasons" style="display:flex; gap:14px; overflow-x:auto; padding:6px 2px 14px;">
                 ${relatedSeasons.map(rs => `
                     <a href="/media/tv/${id}?aniId=${rs.id}${nsfwQS}"
                        style="flex:0 0 auto; width:120px; text-decoration:none; color:white;
