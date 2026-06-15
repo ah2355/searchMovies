@@ -635,7 +635,7 @@ router.get("/:type/:id", async (req, res) => {
                         </a>
                         <div class="nav-links">
                             <button onclick="window.history.back()" class="nav-item" style="background:none; border:none; cursor:pointer;">
-                                ⬅ Back
+                                <i class="fa-solid fa-left-long"></i> Back
                             </button>
                             <a href="/" class="nav-item">Home</a>
                             <a href="/favorites" class="nav-item">Favorites</a>
