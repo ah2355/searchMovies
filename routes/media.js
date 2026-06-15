@@ -326,6 +326,8 @@ router.get("/:type/:id", async (req, res) => {
         const tagline = data.tagline ? `"${data.tagline}"` : "";
         const lang = data.original_language;
         const aniIdParam = req.query.aniId ? Number(req.query.aniId) : null;
+        const resumeParam = req.query.resume || "";
+
 
         const posterPath = data.poster_path ? `https://image.tmdb.org/t/p/w500${data.poster_path}` : '/images/icon.png';
         const backdropPath = data.backdrop_path ? `https://image.tmdb.org/t/p/original${data.backdrop_path}` : '';
@@ -828,6 +830,7 @@ router.get("/:type/:id", async (req, res) => {
                     const wpMediaId = '${id}';
                     const wpAniId = '${aniIdParam || ''}';
                     const wpPoster = '${displayPoster}';
+                    const wpResume = '${resumeParam}';
 
                     /* ---------------- anime (VidPlus) state ---------------- */
                     const isAnime = ${isAnime ? 'true' : 'false'};
@@ -1333,8 +1336,38 @@ router.get("/:type/:id", async (req, res) => {
                             }
                         });
                     }
+
+                    function resumeFromParam() {
+                        if (!wpResume) return;
+                        const m = /^S(\\d+)E(\\d+)$/.exec(wpResume);
+ 
+                        // Movie (or malformed) -> just open the player (plays the movie).
+                        if (currentType === 'movie' || !m) {
+                            openPlayer();
+                            return;
+                        }
+ 
+                        const s = Number(m[1]);
+                        const e = Number(m[2]);
+                        openPlayer();   // builds the picker / anime list
+ 
+                        if (useAnimePlayer) {
+                            // Anime uses a flat index (season is always 1) -> play episode e.
+                            renderAnimeIframe(e);
+                        } else {
+                            // Live-action TV: play S{s}E{e} directly, no need to wait for the grid.
+                            currentSeason = s;
+                            currentEpisode = e;
+                            markWatched(s, e);
+                            document.getElementById('player-title').innerText =
+                                currentTitle + ' — S' + String(s).padStart(2, '0') + 'E' + String(e).padStart(2, '0');
+                            renderIframe(getEpisodeSrc(currentSource, s, e));
+                            document.getElementById('player-content').scrollTop = 0;
+                        }
+                    }
         
                 loadWatched();
+                resumeFromParam();
                 </script>
             </html>`);
 

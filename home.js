@@ -366,13 +366,25 @@ app.get('/', async (req,res) => {
                             </div>
                             <br><br>
                         </div>
-                        <br><br>
-                        <div id="popular-movie">
+                        <br><br>`;
+
+                        html+= ` 
+                        <div id="continue-watching-wrap" style="display:none;">
+                            <div id="popular-movie">
+                                <div id="cw-section" class="slider-container">
+                                    <h2>| Continue Watching</h2>
+                                    <button type="button" class="slide-btn left" onclick="scrollGrid('cw-grid', -300)">❮</button>
+                                    <div id="cw-grid" class="popular-movie-grid"></div>
+                                    <button type="button" class="slide-btn right" onclick="scrollGrid('cw-grid', 300)">❯</button>
+                                </div>
+                            </div>
+                        </div>`;
+
+                        html += `<div id="popular-movie">
                             <div id="movie-section" class="slider-container">
                                 <h2>| Trending Movies</h2>
                                 <button type="button" class="slide-btn left" onclick="scrollGrid('movie-grid', -300)">❮</button>
-                            <div id="movie-grid" class="popular-movie-grid">
-    `;
+                            <div id="movie-grid" class="popular-movie-grid"> `;
 
     // Trending Movies Section
     for (const movie of moviesData.results || []) {
@@ -1704,6 +1716,53 @@ app.get("/anime-go", async (req, res) => {
 app.get("/toggle-nsfw", (req, res) => {
     req.session.nsfw = !req.session.nsfw;
     res.redirect(req.get('referer') || '/');
+});
+
+app.get("/api/continue-watching", async (req, res) => {
+    if (!req.session || !req.session.userId) {
+        return res.json({ items: [] });
+    }
+    try {
+        const docs = await WatchProgress.find({ user: req.session.userId })
+            .sort({ updatedAt: -1 })
+            .limit(20);
+ 
+        const items = docs.map(d => ({
+            mediaType: d.mediaType,
+            mediaId: d.mediaId,
+            aniId: d.aniId || "",
+            title: d.title || "Untitled",
+            poster: d.poster || "/images/icon.png",
+            lastSeason: d.lastSeason,
+            lastEpisode: d.lastEpisode
+        }));
+ 
+        return res.json({ items });
+    } catch (err) {
+        console.log("continue-watching error:", err.message);
+        return res.json({ items: [] });
+    }
+});
+
+app.post("/watch-progress/remove", async (req, res) => {
+    if (!req.session || !req.session.userId) {
+        return res.json({ ok: false, guest: true });
+    }
+    try {
+        const { mediaType, mediaId } = req.body;
+        if (!mediaType || !mediaId) {
+            return res.status(400).json({ ok: false, error: "missing mediaType/mediaId" });
+        }
+        await WatchProgress.deleteOne({
+            user: req.session.userId,
+            mediaType,
+            mediaId: String(mediaId)
+        });
+        return res.json({ ok: true });
+    } catch (err) {
+        console.log("watch-progress/remove error:", err.message);
+        return res.status(500).json({ ok: false });
+    }
 });
 
 app.get("/my-watchlist", redirectLogin, async (req, res) => {

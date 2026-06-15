@@ -421,6 +421,37 @@ body{
   box-sizing: border-box;
 }
 
+.cw-card .popular-poster-container {
+  position: relative;
+}
+ 
+.cw-remove {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 26px;
+  height: 26px;
+  line-height: 24px;
+  text-align: center;
+  font-size: 14px;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.7);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  z-index: 4;
+  opacity: 0;
+  transition: opacity 0.15s, background 0.15s;
+}
+ 
+.cw-card:hover .cw-remove {
+  opacity: 1;
+}
+.cw-remove:hover {
+  background: #e50914;
+}
+ 
+
 #popular-movie {
   position: relative;
   width: 100%;
@@ -1481,10 +1512,15 @@ button{
     width: 280px;
     z-index: 10;
     border-radius: 5px;
-}
+  }
   .hidden{
     display: none;
   }
+
+  .cw-remove { 
+    opacity: 1; 
+  }
+
   #popular-movie h2{
     font-size: 20px;
     margin-left: 22px;
