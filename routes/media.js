@@ -5,13 +5,7 @@ const puppeteer = require('puppeteer');
 const router = express.Router();
 const { fetchFavoritesFromDB, fetchWatchlistFromDB } = require("../misc/db.js");
 
-const detailGenreMap = {
-    28: "Action", 12: "Adventure", 16: "Animation", 35: "Comedy",
-    80: "Crime", 99: "Documentary", 18: "Drama", 10751: "Family",
-    14: "Fantasy", 36: "History", 27: "Horror", 10402: "Music",
-    96: "Mystery", 10749: "Romance", 878: "Sci-Fi", 53: "Thriller",
-    10752: "War", 37: "Western", 10759: "Action & Adventure", 10765: "Sci-Fi & Fantasy"
-};
+const genreMap = require('../misc/genreMap');
 
 async function tryScrape(title, type) {
     const normalizedTitle = title.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -545,7 +539,7 @@ router.get("/:type/:id", async (req, res) => {
             if (isAnime) genreNames = genreNames.filter(name => name.toLowerCase() !== "animation");
             genresText = genreNames.join(", ");
         } else if (rawGenreIds.length > 0) {
-            let genreNames = rawGenreIds.map(id => detailGenreMap[id]).filter(Boolean);
+            let genreNames = rawGenreIds.map(id => genreMap[id]).filter(Boolean);
             if (isAnime) genreNames = genreNames.filter(name => name.toLowerCase() !== "animation");
             genresText = genreNames.join(", ");
         }

@@ -1,0 +1,704 @@
+const express = require('express');
+const router = express.Router();
+const { fetchFavoritesFromDB, fetchWatchlistFromDB } = require('../misc/db');
+
+let animeCacheData = null;
+let animeCacheTime = 0;
+let trendingAnimeCache = [];
+let trendingAnimeCacheTime = 0;
+let airingAnimeCache = [];
+let airingAnimeCacheTime = 0;
+const ANIME_ROW_CACHE_MS = 1000 * 60 * 10;
+const ANIME_CACHE_MS = 1000 * 60 * 30;
+
+router.get('/', async (req,res) => {
+    const isGuest = !(req.session && req.session.userId);
+    const username = isGuest ? "Guest" : req.session.username;
+    let displayName = (username !== "Guest" && username.includes('@')) 
+        ? username.split('@')[0] 
+        : username;
+    displayName = displayName.charAt(0).toUpperCase() + displayName.substring(1);
+    
+    const authAction = isGuest 
+        ? `<a href="/users/login" class="nav-item" id="login-link">Log In</a>`
+        : `<form action="/users/logout" method="post" style="display: inline;">
+             <button type="submit" id="logout-link-btn">Sign Out</button>
+           </form>`;
+    
+    const api_key = process.env.TMDB_API_KEY;
+    const page = Number(req.query.page) || 1;
+    const [moviesData, seriesData, trendingData, airingData, animePopular, animeClassic] = await Promise.all([
+        fetch(`https://api.themoviedb.org/3/movie/popular?api_key=${api_key}&language=en-US&page=1`).then(r => r.json()),
+        fetch(`https://api.themoviedb.org/3/tv/popular?api_key=${api_key}&language=en-US&page=1`).then(r => r.json()),
+        fetch(`https://api.themoviedb.org/3/trending/all/day?api_key=${api_key}&language=en-US&page=1`).then(r => r.json()),
+        fetch(`https://api.themoviedb.org/3/tv/airing_today?api_key=${api_key}`).then(r => r.json()),
+        fetch(`https://api.themoviedb.org/3/discover/tv?api_key=${api_key}&with_genres=16&with_original_language=ja&sort_by=popularity.desc&page=1`).then(r => r.json()),
+        fetch(`https://api.themoviedb.org/3/discover/tv?api_key=${api_key}&with_genres=16&with_original_language=ja&sort_by=vote_count.desc&page=1`).then(r => r.json()),
+    ]);
+
+  
+    let trendingAnime = [];
+    try {
+        const trendingQuery = `
+            query {
+                Page(page: 1, perPage: 20) {
+                    media(type: ANIME, sort: TRENDING_DESC, format_in: [TV, TV_SHORT], isAdult: ${req.session.nsfw ? 'true' : 'false'}) {
+                        id
+                        title { romaji english }
+                        coverImage { large }
+                        averageScore
+                        startDate { year }
+                    }
+                }
+            }
+        `;
+        const tr = await fetch('https://graphql.anilist.co', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query: trendingQuery })
+        });
+        const td = await tr.json();
+        const fetched = td.data?.Page?.media || [];
+        if (fetched.length) {
+            trendingAnime = fetched;
+            trendingAnimeCache = fetched;          // remember last good
+            trendingAnimeCacheTime = Date.now();
+        } else if (Date.now() - trendingAnimeCacheTime < ANIME_ROW_CACHE_MS) {
+            trendingAnime = trendingAnimeCache;    // fall back to cache
+        }
+    } catch (err) {
+        console.log('Trending anime fetch failed:', err.message);
+        if (Date.now() - trendingAnimeCacheTime < ANIME_ROW_CACHE_MS) {
+            trendingAnime = trendingAnimeCache;    // fall back to cache on error
+        }
+    }
+       
+    
+    const seen = new Set();
+    const adultKeywords = ['hentai', 'ero ', 'ecchi', 'overflow', 'kiss x sis', 'domestic na kanojo', 'yosuga', 'indoor', 'secret journey', 'peter grill', 'interspecies reviewers', 'sweet agony', 'sweet punishment', 'personal pet', 'guard\'s personal', 'fire in his fingertips', 'secret mission - undercover agents never back down!'];    
+    let animeResults = [...(animePopular.results || []), ...(animeClassic.results || [])]  
+        .filter(a => {
+            if (seen.has(a.id)) return false;
+            seen.add(a.id);
+            const titleLower = (a.name || a.original_name || '').toLowerCase();
+            if (adultKeywords.some(w => titleLower.includes(w))) return false;
+            if (a.adult) return false;
+            return true;
+        });
+
+   
+    if (animeCacheData && (Date.now() - animeCacheTime < ANIME_CACHE_MS)) {
+        animeResults = animeCacheData;
+    } else {
+        const batchQuery = `{
+            ${animeResults.map((a, i) => {
+                const safe = (a.name || a.original_name || '').replace(/[^a-zA-Z0-9 ]/g, '').trim().substring(0, 50);
+                return `a${i}: Media(search: "${safe}", type: ANIME) { isAdult genres }`;
+            }).join('\n')}
+        }`;
+        try {
+            const r = await fetch('https://graphql.anilist.co', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query: batchQuery })
+            });
+            const d = await r.json();
+            animeResults = animeResults.filter((a, i) => {
+                const ani = d.data?.[`a${i}`];
+                if (ani?.isAdult) return false;
+                if (ani?.genres?.some(g => g.toLowerCase() === 'hentai')) return false;
+                return true;
+            });
+            animeCacheData = animeResults;
+            animeCacheTime = Date.now();
+        } catch (err) {
+            console.log('Home AniList batch failed:', err.message);
+            // fall back to unfiltered-by-anilist (keyword filter already applied if you keep it)
+        }
+    }
+
+    let airingAnime = [];
+    try {
+        const airingQuery = `
+            query {
+                Page(page: 1, perPage: 20) {
+                    media(type: ANIME, status: RELEASING, sort: POPULARITY_DESC, isAdult: ${req.session.nsfw ? 'true' : 'false'}) {
+                        id
+                        idMal
+                        title { romaji english }
+                        coverImage { large }
+                        averageScore
+                        nextAiringEpisode { episode timeUntilAiring }
+                    }
+                }
+            }
+        `;
+        const ar = await fetch('https://graphql.anilist.co', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query: airingQuery })
+        });
+        const ad = await ar.json();
+        const fetched = ad.data?.Page?.media || [];
+        if (fetched.length) {
+            airingAnime = fetched;
+            airingAnimeCache = fetched;            // remember last good
+            airingAnimeCacheTime = Date.now();
+        } else if (Date.now() - airingAnimeCacheTime < ANIME_ROW_CACHE_MS) {
+            airingAnime = airingAnimeCache;        // fall back to cache
+        }
+    } catch (err) {
+        console.log('Airing anime fetch failed:', err.message);
+        if (Date.now() - airingAnimeCacheTime < ANIME_ROW_CACHE_MS) {
+            airingAnime = airingAnimeCache;        // fall back to cache on error
+        }
+    }
+    const firstBackdrop = moviesData.results?.find(m => m.backdrop_path)?.backdrop_path;
+        
+    let html = ` 
+    <!DOCTYPE html>
+        <html>
+            <head>
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>SearchMovie | Discover & Track Movies</title>
+                <meta name="description" content="Search, discover, and track your favorite movies and TV shows. Find reviews and streaming providers with SearchMovie.">
+                
+                <meta property="og:title" content="SearchMovie - Movie & TV Discovery">
+                <meta property="og:description" content="Discover, search, and track your favorite movies and TV shows with real-time Rotten Tomatoes scores.">
+                <meta property="og:image" content="https://searchmovie.win/images/icon.png">
+                <meta property="og:url" content="https://searchmovie.win">
+                <meta property="og:type" content="website">
+
+                <meta name="twitter:card" content="summary_large_image">
+                <meta name="twitter:title" content="SearchMovie - Movie & TV Discovery">
+                <meta name="twitter:description" content="Discover, search, and track your favorite movies and TV shows.">
+                <meta name="twitter:image" content="https://searchmovie.win/images/icon.png">
+                
+                ${firstBackdrop ? `<link rel="preload" as="image" href="https://image.tmdb.org/t/p/w1280${firstBackdrop}" fetchpriority="high">` : ''}
+                <link rel="icon" type="image/png" href="https://searchmovie.win/images/icon.png">
+                <link rel="apple-touch-icon" href="https://searchmovie.win/images/icon.png">
+                <link rel="icon" type="image/x-icon" href="/images/icon.png">
+                <link rel="stylesheet" href="/css/style.css">
+                <link rel="preconnect" href="https://image.tmdb.org">
+                <link rel="preconnect" href="https://fonts.googleapis.com">
+                <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+                <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+                <script type="application/ld+json">
+                    {
+                    "@context": "https://schema.org",
+                    "@type": "WebSite",
+                    "name": "SearchMovie",
+                    "url": "https://searchmovie.win/"
+                    }
+                </script>
+                <script src="misc/genreFunc.js" defer></script>
+            </head>
+            <body>
+            <div class="app-container">
+                    <main class="main-content">
+                        <div id="movieBody">
+                            <div id="announcements">
+                                <p></p>
+                            </div>
+
+                            <div class="content-bg">
+                                <nav class="navbar-main">
+                                    <div id="item-left">
+                                        <span class="nav-title">SearchMovie</span>
+                                    </div>
+                                    <button class="hamburger" id="hamburger">☰</button>
+
+                                    <div class="nav-links" id="navLinks">
+                                        <span class="nav-greeting">Hello, ${displayName}!</span>
+                                        <a href="/favorites" id="fav-list" class="nav-item">Favorite List</a>
+                                        <div class="genre-wrapper">
+                                            <button type="button" class="nav-item" id="browseBtn"><p>Browse</p></button>
+                                            <div id="browseBox" class="browse-box hidden">
+                                                <a href="/my-watchlist"><i class="fa-solid fa-bookmark"></i> My Watchlist</a>
+                                                <a href="/airing"><i class="fa-solid fa-tv"></i> Airing Today</a>
+                                                <a href="/discover?media=movie"><i class="fa-solid fa-film"></i> Movies</a>
+                                                <a href="/discover?media=tv"><i class="fa-solid fa-satellite-dish"></i> TV Shows</a>
+                                                <a href="/discover?genres=Action"><i class="fa-solid fa-explosion"></i> Action</a>
+                                                <a href="/discover?genres=Comedy"><i class="fa-solid fa-face-laugh"></i> Comedy</a>
+                                                <a href="/discover?genres=Horror"><i class="fa-solid fa-skull"></i> Horror</a>
+                                                <a href="/discover?genres=Animation"><i class="fa-solid fa-wand-magic-sparkles"></i> Animation</a>
+                                                <a href="/anime"><i class="fa-solid fa-dragon"></i> Anime</a>
+                                                <a href="/discover?genres=Documentary"><i class="fa-solid fa-microphone"></i> Documentary</a>
+                                            </div>
+                                        </div>
+                                        ${authAction}
+                                    </div>
+                                </nav>
+                                <div id="backdrop-slider"></div>
+                                <div class="content-overlay">
+                                    <h2 id="main-header">Everything in one place</h2> 
+                                    <form id="movieForm" action="/results" method="get">
+                                        <div class="search-container" style="position: relative; display: inline-block;">
+                                            <input type="text" name="q" id="movieName" placeholder="Search movies...">
+                                            <button id="searchBtn"><img id="srchImg" src="images/clipart2603165.png" alt="Search"></button>
+                                            <div id="suggestionsBox"></div>
+                                        </div>
+
+                                        <br><br>
+                                        
+                                        <div class = "rec-box">
+                                            <h3>Not sure what to search? Just fill up these and get recommendations!</h3>
+
+                                            <div class="rec-container">
+                                                <input type="number" name="rating" id="movieRating" max="10" min="0" step="0.1" placeholder="Minimum Rating">
+                                                <div class="genre-wrapper">
+                                                    <button type="button" id="genreBtn">Select Genre</button>
+                                                    <div id="genreBox" class="genre-box hidden">
+                                                        <label><input type="checkbox" value="Action"> Action</label>
+                                                        <label><input type="checkbox" value="Comedy"> Comedy</label>
+                                                        <label><input type="checkbox" value="Drama"> Drama</label>
+                                                        <label><input type="checkbox" value="Horror"> Horror</label>
+                                                        <label><input type="checkbox" value="Romance"> Romance</label>
+                                                        <label><input type="checkbox" value="Sci-Fi"> Sci-Fi</label>
+                                                        <label><input type="checkbox" value="Thriller"> Thriller</label>
+                                                        <label><input type="checkbox" value="Animation"> Animation</label>
+                                                        <label><input type="checkbox" value="Crime"> Crime</label>
+                                                        <label><input type="checkbox" value="Adventure"> Adventure</label>
+                                                    </div>
+                                                    <input type="hidden" name="genres" id="selectedGenres">
+                                                </div>
+                                                <input type="text" name="year" id="yearRelease" placeholder="Year">
+                                                <select name="media" id="mediaSelect">
+                                                    <option value="multi">Type</option>
+                                                    <option value="movie">Movie</option>
+                                                    <option value="tv">TV</option>
+                                                </select>
+                                                <select name="language" id="langSelect">
+                                                    <option value="">All Languages</option>
+                                                    <option value="en">English</option>
+                                                    <option value="hi">Hindi</option>
+                                                    <option value="kn">Kannada</option>
+                                                    <option value="es">Spanish</option>
+                                                    <option value="fr">French</option>
+                                                    <option value="bn">Bangla</option>
+                                                </select>
+                                                <br><br>
+                                            </div>
+                                            <input type="submit" id="submit" value="Search">
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                            <br><br>
+                        </div>
+                        <br><br>`;
+
+                        html+= ` 
+                        <div id="continue-watching-wrap" style="display:none;">
+                            <div id="popular-movie">
+                                <div id="cw-section" class="slider-container">
+                                    <h2>| Continue Watching</h2>
+                                    <button type="button" class="slide-btn left" onclick="scrollGrid('cw-grid', -300)">❮</button>
+                                    <div id="cw-grid" class="popular-movie-grid"></div>
+                                    <button type="button" class="slide-btn right" onclick="scrollGrid('cw-grid', 300)">❯</button>
+                                </div>
+                            </div>
+                        </div>`;
+
+                        html += `<div id="popular-movie">
+                            <div id="movie-section" class="slider-container">
+                                <h2>| Trending Movies</h2>
+                                <button type="button" class="slide-btn left" onclick="scrollGrid('movie-grid', -300)">❮</button>
+                            <div id="movie-grid" class="popular-movie-grid"> `;
+
+    // Trending Movies Section
+    for (const movie of moviesData.results || []) {
+        const movieTitle = movie.title;
+        const posterPath = movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : 'images/icon.png';
+        const dateString = movie.release_date || ""
+        const releaseYear = dateString ? dateString.substring(0, 4) : "N/A";
+        const rating = movie.vote_average ? Number(movie.vote_average).toFixed(1) : "N/A";
+
+
+        html += `
+                <div class="popular-movie-card" onclick="window.location.href='/media/movie/${movie.id}'">
+                    <div class="popular-poster-container"> 
+                        <img class="popular-movie-img" src="${posterPath}" alt="${movieTitle} poster">
+                        <div class="play-overlay">
+                            <div class="play-icon"><i class="fa-solid fa-play"></i></div>
+                        </div>
+                    </div>
+                    <div class="movieInfo">
+                        <p class="movieTitleText">${movieTitle}</p>
+                        <p class="movieReleaseYear">${releaseYear}</p>
+                        <div class="starrt-container">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="star">
+                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                <span class="star-rating">${rating}</span>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+        `;
+    }
+    html += `
+                <button type="button" class="slide-btn right" onclick="scrollGrid('movie-grid', 300)">❯</button>
+            </div>
+        </div>`;
+
+    // End of Trending Movies Section
+
+    // Trending Shows Section
+     html+= ` <div id="popular-movie">
+                        <div id="show-section" class="slider-container">
+                            <h2>| Trending Shows</h2>
+                            <button type="button" class="slide-btn left" onclick="scrollGrid('show-grid', -300)">❮</button>
+                        <div id="show-grid" class="popular-movie-grid">`;
+
+    for (const series of seriesData.results || []) {
+        const seriesTitle = series.name;
+        const posterPath = series.poster_path ? `https://image.tmdb.org/t/p/w500${series.poster_path}` : 'images/icon.png';
+        const dateString = series.first_air_date || ""
+        const releaseYear = dateString ? dateString.substring(0, 4) : "N/A";
+        const rating = series.vote_average ? Number(series.vote_average).toFixed(1) : "N/A";
+
+
+        html += `
+                <div class="popular-movie-card" onclick="window.location.href='/media/tv/${series.id}'">
+                    <div class="popular-poster-container"> 
+                        <img class="popular-movie-img" src="${posterPath}" alt="${seriesTitle} poster">
+                        <div class="play-overlay">
+                            <div class="play-icon"><i class="fa-solid fa-play"></i></div>
+                        </div>
+                    </div>
+                    <div class="movieInfo">
+                        <p class="movieTitleText">${seriesTitle}</p>
+                        <p class="movieReleaseYear">${releaseYear}</p>
+                        <div class="starrt-container">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="star">
+                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                <span class="star-rating">${rating}</span>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+        `;
+    }
+
+
+    html+= `
+                <button type="button" class="slide-btn right" onclick="scrollGrid('show-grid', 300)">❯</button>
+            </div>
+        </div>`
+    //End of Trending Shows Section
+    
+    // Trending Today Section
+    html+= ` <div id="popular-movie">
+                        <div id="show-section" class="slider-container">
+                            <h2>| Trending Today</h2>
+                            <button type="button" class="slide-btn left" onclick="scrollGrid('td-grid', -300)">❮</button>
+                        <div id="td-grid" class="popular-movie-grid">`;
+
+    for (const trendingM of trendingData.results || []) {
+        const mediaTypeTD = trendingM.media_type;
+        const seriesTitle = mediaTypeTD == "movie" ? trendingM.title : trendingM.name;
+        const posterPath = trendingM.poster_path ? `https://image.tmdb.org/t/p/w500${trendingM.poster_path}` : 'images/icon.png';
+        const dateString = mediaTypeTD == "movie" ? trendingM.release_date : trendingM.first_air_date;
+        const releaseYear = dateString ? dateString.substring(0, 4) : "N/A";
+        const rating = trendingM.vote_average ? Number(trendingM.vote_average).toFixed(1) : "N/A";
+
+
+        html += `
+                <div class="popular-movie-card" onclick="window.location.href='/media/${mediaTypeTD}/${trendingM.id}'">
+                    <div class="popular-poster-container"> 
+                        <img class="popular-movie-img" src="${posterPath}" alt="${seriesTitle} poster">
+                        <div class="play-overlay">
+                            <div class="play-icon"><i class="fa-solid fa-play"></i></div>
+                        </div>
+                    </div>
+                    <div class="movieInfo">
+                        <p class="movieTitleText">${seriesTitle}</p>
+                        <p class="movieReleaseYear">${releaseYear}</p>
+                        <p class="mediaTypeInfo">${mediaTypeTD == "movie" ? "Movie" : "TV"}</p>
+                        <div class="starrt-container">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="star">
+                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                <span class="star-rating">${rating}</span>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+        `;
+    }
+
+    html+= `
+                <button type="button" class="slide-btn right" onclick="scrollGrid('td-grid', 300)">❯</button>
+            </div>
+        </div>`
+    
+    // End of Trending Today Section
+
+    // Airing Today Section
+    html+= ` <div id="popular-movie">
+                        <div id="show-section" class="slider-container">
+                            <a href="/airing" id="air-td-link"<h2 class="airtdHead">| Airing Today ⬈</h2></a>
+                            <button type="button" class="slide-btn left" onclick="scrollGrid('airtd-grid', -300)">❮</button>
+                        <div id="airtd-grid" class="popular-movie-grid">`;
+    
+
+    for (const air of airingData.results || []) {
+        const mediaTypeTD = air.media_type;
+        const seriesTitle = air.name;
+        const posterPath = air.poster_path ? `https://image.tmdb.org/t/p/w500${air.poster_path}` : 'images/icon.png';
+        const dateString = air.first_air_date;
+        const releaseYear = dateString ? dateString.substring(0, 4) : "N/A";
+        const rating = air.vote_average ? Number(air.vote_average).toFixed(1) : "N/A";
+
+
+        html += `
+                <div class="popular-movie-card" onclick="window.location.href='/media/tv/${air.id}'">
+                    <div class="popular-poster-container"> 
+                        <img class="popular-movie-img" src="${posterPath}" alt="${seriesTitle} poster">
+                        <div class="play-overlay">
+                            <div class="play-icon"><i class="fa-solid fa-play"></i></div>
+                        </div>
+                    </div>
+                    <div class="movieInfo">
+                        <p class="movieTitleText">${seriesTitle}</p>
+                        <p class="movieReleaseYear">${releaseYear}</p>
+                        <div class="starrt-container">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="star">
+                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                <span class="star-rating">${rating}</span>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+        `;
+    }
+
+    html+= `
+                <button type="button" class="slide-btn right" onclick="scrollGrid('airtd-grid', 300)">❯</button>
+            </div>
+        </div>`
+    // End of Airing Today Section
+
+    html += `<div id="popular-movie">
+    <div id="show-section" class="slider-container">
+        <a href="/anime" id="air-td-link"><h2 class="airtdHead">| Trending Anime ⬈</h2></a>
+        <button type="button" class="slide-btn left" onclick="scrollGrid('anime-grid', -300)">❮</button>
+        <div id="anime-grid" class="popular-movie-grid">`;
+
+     for (const anime of trendingAnime) {
+        const title = anime.title.english || anime.title.romaji || "Unknown";
+        const posterPath = anime.coverImage?.large || 'images/icon.png';
+        const releaseYear = anime.startDate?.year || "N/A";
+        const rating = anime.averageScore ? (anime.averageScore / 10).toFixed(1) : "N/A";
+        const searchTitle = anime.title.english || anime.title.romaji || "";
+        const cleanTitle = searchTitle.replace(/season\s*\d+/i, '').replace(/[-–—:]/g, ' ').replace(/\s+/g, ' ').trim();
+        const href = `/anime-go?title=${encodeURIComponent(cleanTitle).replace(/'/g, '%27')}&aniId=${anime.id}`;
+ 
+        html += `
+            <div class="popular-movie-card" onclick="window.location.href='${href}'">
+                <div class="popular-poster-container">
+                    <img class="popular-movie-img" src="${posterPath}" alt="${title} poster">
+                    <div class="play-overlay"><div class="play-icon"><i class="fa-solid fa-play"></i></div></div>
+                </div>
+                <div class="movieInfo">
+                    <p class="movieTitleText">${title}</p>
+                    <p class="movieReleaseYear">${releaseYear}</p>
+                    <div class="starrt-container">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="star">
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                            <span class="star-rating">${rating}</span>
+                        </svg>
+                    </div>
+                </div>
+            </div>`;
+    }
+
+    html += `
+            <button type="button" class="slide-btn right" onclick="scrollGrid('anime-grid', 300)">❯</button>
+        </div>
+    </div>`;
+
+    html += `<div id="popular-movie">
+    <div id="show-section" class="slider-container">
+        <a href="/anime?filter=airing" id="air-td-link"><h2 class="airtdHead">| Airing Anime ⬈</h2></a>
+        <button type="button" class="slide-btn left" onclick="scrollGrid('airing-anime-grid', -300)">❮</button>
+        <div id="airing-anime-grid" class="popular-movie-grid">`;
+
+    for (const anime of airingAnime) {
+        const title = anime.title.english || anime.title.romaji || "Unknown";
+        const poster = anime.coverImage?.large || 'images/icon.png';
+        const rating = anime.averageScore ? (anime.averageScore / 10).toFixed(1) : "N/A";
+        const next = anime.nextAiringEpisode;
+        let countdown = "";
+        if (next) {
+            const days = Math.floor(next.timeUntilAiring / 86400);
+            const hours = Math.floor((next.timeUntilAiring % 86400) / 3600);
+            countdown = `Ep ${next.episode} • ${days}d ${hours}h`;
+        }
+        const searchTitle = anime.title.english || anime.title.romaji || "";
+        const cleanTitle = searchTitle.replace(/season\s*\d+/i, '').replace(/[-–—:]/g, ' ').replace(/\s+/g, ' ').trim();
+        const href = `/anime-go?title=${encodeURIComponent(cleanTitle).replace(/'/g, '%27')}&aniId=${anime.id}`;        
+        html += `
+            <div class="popular-movie-card" onclick="window.location.href='${href}'">
+                <div class="popular-poster-container">
+                    <img class="popular-movie-img" src="${poster}" alt="${title} poster">
+                    <div class="play-overlay"><div class="play-icon"><i class="fa-solid fa-play"></i></div></div>
+                </div>
+                <div class="movieInfo">
+                    <p class="movieTitleText">${title}</p>
+                    ${countdown ? `<p class="movieReleaseYear">${countdown}</p>` : ''}
+                    <div class="starrt-container">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="star">
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                            <span class="star-rating">${rating}</span>
+                        </svg>
+                    </div>
+                </div>
+            </div>`;
+    }
+
+    html += `
+            <button type="button" class="slide-btn right" onclick="scrollGrid('airing-anime-grid', 300)">❯</button>
+        </div>
+    </div>`;
+
+   html+= `
+            </div>
+         </main>
+        </div>
+        <script>
+            async function initBackdropSlider() {
+                try {
+                    const res = await fetch('/api/backdrops');
+                    const movies = await res.json();
+                    const slider = document.getElementById('backdrop-slider');
+
+                    movies.forEach(function(movie, i) {
+                        const slide = document.createElement('div');
+                        slide.className = 'slide' + (i === 0 ? ' active' : '');
+                        slide.style.backgroundImage = 'url(https://image.tmdb.org/t/p/w1280' + movie.backdrop + ')';
+                        slide.innerHTML = '<span class="slide-title">' + movie.title + '</span>';
+                        slider.appendChild(slide);
+                    });
+
+                    let current = 0;
+                    setInterval(function() {
+                        const slides = slider.querySelectorAll('.slide');
+                        slides[current].classList.remove('active');
+                        current = (current + 1) % slides.length;
+                        slides[current].classList.add('active');
+                    }, 5000);
+                } catch(err) {
+                    console.error('Backdrop slider error:', err);
+                }
+            }
+            initBackdropSlider();
+            async function loadContinueWatching() {
+                try {
+                    const res = await fetch('/api/continue-watching');
+                    const data = await res.json();
+                    const items = data.items || [];
+                    if (!items.length) return; // leave the row hidden
+
+                    const grid = document.getElementById('cw-grid');
+                    grid.innerHTML = items.map(function (it) {
+                            const isTv = it.mediaType === 'tv';
+                            let resume = '';
+                            if (isTv && it.lastSeason && it.lastEpisode) {
+                                resume = 'S' + it.lastSeason + 'E' + it.lastEpisode;
+                            }
+                            const params = [];
+                            if (it.aniId) params.push('aniId=' + encodeURIComponent(it.aniId));
+                            if (resume) params.push('resume=' + resume);
+                            const href = '/media/' + it.mediaType + '/' + it.mediaId
+                                + (params.length ? '?' + params.join('&') : '');
+
+                            const badge = isTv && it.lastSeason && it.lastEpisode
+                                ? ('S' + it.lastSeason + ' • E' + it.lastEpisode)
+                                : 'Movie';
+
+                            const safeTitle = (it.title || '').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+                            const safeHref = href.replace(/"/g, '&quot;');
+
+                            return ''
+                            + '<div class="cw-card-big" data-href="' + safeHref + '">'
+                            +   '<div class="cw-big-poster">'
+                            +     '<img src="' + it.poster + '" alt="' + safeTitle + ' poster">'
+                            +     '<div class="cw-big-play">▶</div>'
+                            +   '</div>'
+                            +   '<div class="cw-big-info">'
+                            +     '<p class="cw-big-sub">Continue watching</p>'
+                            +     '<p class="cw-big-title">' + safeTitle + '</p>'
+                            +     '<span class="cw-big-badge">' + badge + '</span>'
+                            +   '</div>'
+                            +   '<button class="cw-remove" title="Remove" data-mt="' + it.mediaType + '" data-mid="' + it.mediaId + '">✕</button>'
+                            + '</div>';
+                        }).join('');
+
+                    // Attach handlers (no inline onclick -> no quote-escaping issues).
+                    grid.querySelectorAll('.cw-card-big').forEach(function (card) {
+                        card.addEventListener('click', function () {
+                            window.location.href = card.getAttribute('data-href');
+                        });
+                    });
+                    grid.querySelectorAll('.cw-remove').forEach(function (btn) {
+                        btn.addEventListener('click', function (ev) {
+                            ev.stopPropagation();
+                            removeContinueWatching(btn, btn.getAttribute('data-mt'), btn.getAttribute('data-mid'));
+                        });
+                    });
+
+                    document.getElementById('continue-watching-wrap').style.display = 'block';
+                } catch (err) {
+                    console.error('Continue Watching load error:', err);
+                }
+            }
+
+            async function removeContinueWatching(btn, mediaType, mediaId) {
+                // Find the card regardless of its exact class name.
+                let card = btn.closest('.cw-card-big') || btn.closest('.cw-card');
+                if (!card) {
+                    // Fallback: climb to whichever ancestor is a direct child of the grid.
+                    const g0 = document.getElementById('cw-grid');
+                    let n = btn;
+                    while (n && n.parentElement !== g0) n = n.parentElement;
+                    card = n;
+                }
+                if (card) card.remove();
+
+                const grid = document.getElementById('cw-grid');
+                if (grid && grid.children.length === 0) {
+                    document.getElementById('continue-watching-wrap').style.display = 'none';
+                }
+                try {
+                    await fetch('/watch-progress/remove', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ mediaType: mediaType, mediaId: mediaId })
+                    });
+                } catch (err) { /* card already removed from UI; best-effort */ }
+            }
+
+            loadContinueWatching();
+        </script>
+     </body>
+    </html>`;
+
+
+return res.send(html);
+});
+
+router.get('/api/backdrops', async (req, res) => {
+    const api_key = process.env.TMDB_API_KEY;
+    const apiRes = await fetch(`https://api.themoviedb.org/3/movie/popular?api_key=${api_key}&language=en-US&page=1`);
+    const data = await apiRes.json();
+    const backdrops = data.results
+        .filter(m => m.backdrop_path)
+        .slice(0, 10)
+        .map(m => ({ title: m.title, backdrop: m.backdrop_path }));
+
+    res.json(backdrops);
+});
+
+
+module.exports = router;
