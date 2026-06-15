@@ -73,6 +73,7 @@ html {
   justify-content: center;
   min-height: calc(100vh - 80px); 
   width: 100%;
+  margin-bottom: 120px;
 }
 
 #loginContainer {
@@ -218,7 +219,12 @@ h2 {
 
 #feature-section{
     display: flex;
-    background-color: rgb(126 163 163);
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.55);
+    animation: dropIn 0.4s ease-out forwards;
     align-items: center;
     justify-content: center;
     flex-direction: column;
@@ -234,8 +240,105 @@ h2 {
 
 #feature-section h2{
     text-align: center;
+    font-size: 25px;
     margin: 0;
 }
+
+.feature-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    margin-bottom: 18px;
+    border-radius: 18px;
+    font-size: 26px;
+    color: #fff;
+
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    box-shadow:0 8px 24px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.25);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+#feature-section:hover .feature-icon {
+    transform: translateY(-4px) scale(1.06);
+    box-shadow:0 12px 30px rgba(252, 70, 107, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.35);
+}
+
+#tools-heading {
+    text-align: center;
+    margin-top: 40px;
+}
+
+.tools-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 14px;
+    max-width: 900px;
+    margin: 20px auto 80px;
+    padding: 0 20px;
+    animation: dropIn 0.4s ease-in forwards;
+}
+
+.tool-chip {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 18px;
+    border-radius: 14px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #fff;
+
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    box-shadow:
+        0 8px 24px rgba(0, 0, 0, 0.35),
+        inset 0 1px 1px rgba(255, 255, 255, 0.2);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.tool-chip:hover {
+    transform: translateY(-3px);
+    box-shadow:
+        0 12px 30px rgba(252, 70, 107, 0.3),
+        inset 0 1px 1px rgba(255, 255, 255, 0.3);
+}
+
+.tool-chip i {
+    font-size: 20px;
+}
+
+.reveal {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.reveal.in-view {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Stagger children (feature cards / tool chips) for a nicer cascade */
+.reveal.in-view .feature-section,
+.reveal.in-view .tool-chip {
+    animation: dropIn 0.5s ease-out backwards;
+}
+.reveal.in-view .feature-section:nth-child(1),
+.reveal.in-view .tool-chip:nth-child(1) { animation-delay: 0.05s; }
+.reveal.in-view .feature-section:nth-child(2),
+.reveal.in-view .tool-chip:nth-child(2) { animation-delay: 0.12s; }
+.reveal.in-view .feature-section:nth-child(3),
+.reveal.in-view .tool-chip:nth-child(3) { animation-delay: 0.19s; }
+.reveal.in-view .feature-section:nth-child(4),
+.reveal.in-view .tool-chip:nth-child(4) { animation-delay: 0.26s; }
 
 /* For Error Page */
 .errorBody{
