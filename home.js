@@ -672,6 +672,93 @@ app.get('/', async (req,res) => {
                 }
             }
             initBackdropSlider();
+            async function loadContinueWatching() {
+                try {
+                    const res = await fetch('/api/continue-watching');
+                    const data = await res.json();
+                    const items = data.items || [];
+                    if (!items.length) return; // leave the row hidden
+
+                    const grid = document.getElementById('cw-grid');
+                    grid.innerHTML = items.map(function (it) {
+                            const isTv = it.mediaType === 'tv';
+                            let resume = '';
+                            if (isTv && it.lastSeason && it.lastEpisode) {
+                                resume = 'S' + it.lastSeason + 'E' + it.lastEpisode;
+                            }
+                            const params = [];
+                            if (it.aniId) params.push('aniId=' + encodeURIComponent(it.aniId));
+                            if (resume) params.push('resume=' + resume);
+                            const href = '/media/' + it.mediaType + '/' + it.mediaId
+                                + (params.length ? '?' + params.join('&') : '');
+
+                            const badge = isTv && it.lastSeason && it.lastEpisode
+                                ? ('S' + it.lastSeason + ' • E' + it.lastEpisode)
+                                : 'Movie';
+
+                            const safeTitle = (it.title || '').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+                            const safeHref = href.replace(/"/g, '&quot;');
+
+                            return ''
+                            + '<div class="cw-card-big" data-href="' + safeHref + '">'
+                            +   '<div class="cw-big-poster">'
+                            +     '<img src="' + it.poster + '" alt="' + safeTitle + ' poster">'
+                            +     '<div class="cw-big-play">▶</div>'
+                            +   '</div>'
+                            +   '<div class="cw-big-info">'
+                            +     '<p class="cw-big-sub">Continue watching</p>'
+                            +     '<p class="cw-big-title">' + safeTitle + '</p>'
+                            +     '<span class="cw-big-badge">' + badge + '</span>'
+                            +   '</div>'
+                            +   '<button class="cw-remove" title="Remove" data-mt="' + it.mediaType + '" data-mid="' + it.mediaId + '">✕</button>'
+                            + '</div>';
+                        }).join('');
+
+                    // Attach handlers (no inline onclick -> no quote-escaping issues).
+                    grid.querySelectorAll('.cw-card-big').forEach(function (card) {
+                        card.addEventListener('click', function () {
+                            window.location.href = card.getAttribute('data-href');
+                        });
+                    });
+                    grid.querySelectorAll('.cw-remove').forEach(function (btn) {
+                        btn.addEventListener('click', function (ev) {
+                            ev.stopPropagation();
+                            removeContinueWatching(btn, btn.getAttribute('data-mt'), btn.getAttribute('data-mid'));
+                        });
+                    });
+
+                    document.getElementById('continue-watching-wrap').style.display = 'block';
+                } catch (err) {
+                    console.error('Continue Watching load error:', err);
+                }
+            }
+
+            async function removeContinueWatching(btn, mediaType, mediaId) {
+                // Find the card regardless of its exact class name.
+                let card = btn.closest('.cw-card-big') || btn.closest('.cw-card');
+                if (!card) {
+                    // Fallback: climb to whichever ancestor is a direct child of the grid.
+                    const g0 = document.getElementById('cw-grid');
+                    let n = btn;
+                    while (n && n.parentElement !== g0) n = n.parentElement;
+                    card = n;
+                }
+                if (card) card.remove();
+
+                const grid = document.getElementById('cw-grid');
+                if (grid && grid.children.length === 0) {
+                    document.getElementById('continue-watching-wrap').style.display = 'none';
+                }
+                try {
+                    await fetch('/watch-progress/remove', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ mediaType: mediaType, mediaId: mediaId })
+                    });
+                } catch (err) { /* card already removed from UI; best-effort */ }
+            }
+
+            loadContinueWatching();
         </script>
      </body>
     </html>`;
