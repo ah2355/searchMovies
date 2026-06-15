@@ -418,7 +418,9 @@ body{
     display:flex; 
     gap:8px; 
     margin-bottom:12px; 
+    margin-left: 4px;
     flex-wrap:wrap;
+    align-items: center;
 }
 
 .serverBtn{
@@ -612,7 +614,6 @@ body{
   transition: background-color 0.3s; 
 }
 
-
 .heart-btn.active .heart-icon {
     background-color: #e50914;
     opacity: 1;
@@ -650,15 +651,21 @@ body{
     opacity: 0.72;
 }
  
-.episode-card.watched::after,
-.anime-ep-chip.watched::after {
-    content: "✓";
+.episode-card.watched {
+    border-color: #21d07a;
+}
+ 
+.anime-ep-chip.watched {
+    border: 1px solid #21d07a;
+}
+ 
+.watched-check {
     position: absolute;
     top: 4px;
     right: 4px;
-    width: 18px;
-    height: 18px;
-    line-height: 18px;
+    width: 20px;
+    height: 20px;
+    line-height: 20px;
     text-align: center;
     font-size: 12px;
     font-weight: bold;
@@ -666,15 +673,17 @@ body{
     background: #21d07a;
     border-radius: 50%;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
-    z-index: 3;
+    cursor: pointer;
+    z-index: 5;
+    transition: background 0.15s, transform 0.15s;
 }
  
-.episode-card.watched {
-    border-color: #21d07a;
+.watched-check:hover {
+    background: #e50914;
+    transform: scale(1.12);
 }
- 
-.anime-ep-chip.watched {
-    border: 1px solid #21d07a;
+.watched-check:hover::after {
+    content: "";
 }
  
 

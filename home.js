@@ -25,6 +25,7 @@ async function fetchFavoritesFromDB(userId) {
 }
 
 const Watchlist = require("./models/Watchlist");
+const WatchProgress = require("./models/WatchProgress");
 async function fetchWatchlistFromDB(userId) {
     try {
         return await Watchlist.find({ user: userId });
@@ -1862,6 +1863,31 @@ app.get("/watch-progress/:mediaType/:mediaId", async (req, res) => {
         return res.json({ watched: doc ? doc.watchedEpisodes : [] });
     } catch (err) {
         return res.json({ watched: [] });
+    }
+});
+
+app.post("/watch-progress/unmark", async (req, res) => {
+    if (!req.session || !req.session.userId) {
+        return res.json({ ok: false, guest: true });
+    }
+    try {
+        const { mediaType, mediaId, season, episode } = req.body;
+        if (!mediaType || !mediaId) {
+            return res.status(400).json({ ok: false, error: "missing mediaType/mediaId" });
+        }
+        const s = Number(season) || 1;
+        const e = Number(episode);
+        const epKey = (mediaType === "tv" && e) ? `S${s}E${e}` : null;
+        if (!epKey) return res.json({ ok: true }); // nothing to remove (e.g. movie)
+ 
+        await WatchProgress.findOneAndUpdate(
+            { user: req.session.userId, mediaType, mediaId: String(mediaId) },
+            { $pull: { watchedEpisodes: epKey }, $set: { updatedAt: new Date() } }
+        );
+        return res.json({ ok: true });
+    } catch (err) {
+        console.log("watch-progress/unmark error:", err.message);
+        return res.status(500).json({ ok: false });
     }
 });
 

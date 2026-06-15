@@ -2,7 +2,6 @@ const mongoose = require("mongoose");
 
 const watchProgressSchema = new mongoose.Schema({
     user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-
     mediaType: { type: String, enum: ["tv", "movie"], required: true },
     mediaId: { type: String, required: true },     // TMDB id (as string, matches your other models)
     aniId: { type: String, default: "" },          // AniList id if it's an anime (for resume links)

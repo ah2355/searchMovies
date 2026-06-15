@@ -290,8 +290,6 @@ router.get("/:type/:id", async (req, res) => {
     let streamingEpisodes = [];
     let animeSeasonNum = null; // TMDB season number parsed from the AniList title (for thumbnails)
     let bestTmdbSeason = null; // TMDB season matched by air date (more reliable than the number)
-    // AniList display overrides — used only when arriving via ?aniId (a specific season),
-    // so the page shows that season's title/cover/overview instead of the lumped TMDB show's.
     let aniDisplayTitle = null;
     let aniDisplayCover = null;
     let aniDisplayOverview = null;
@@ -394,16 +392,16 @@ router.get("/:type/:id", async (req, res) => {
         }
 
         // Resolve the AniList entry for this anime.
-        // Priority: (1) exact AniList id passed from the /anime card (?aniId=) — needed for
-        // shows TMDB lumps into one entry (e.g. Re:ZERO seasons); (2) title + season-year
-        // search to disambiguate remakes; (3) unfiltered title search as a last resort.
+        // Priority: exact AniList id passed from the /anime card (?aniId=) — needed for
+        // shows TMDB lumps into one entry; title + season-year
+        // search to disambiguate remakes;  unfiltered title search as a last resort.
         // We need: anilistId (drives the player), genres/isAdult (NSFW gate), episode count.
         if (isAnime) {
             try {
                 const EP_FIELDS = `id episodes genres isAdult nextAiringEpisode { episode } streamingEpisodes { title thumbnail } title { romaji english } coverImage { large } bannerImage description(asHtml: false) startDate { year month day } relations { edges { relationType node { id type format title { romaji english } coverImage { medium } startDate { year } } } }`;
                 let media = null;
 
-                // (1) Exact entry the user clicked on /anime
+                // Exact entry the user clicked on /anime
                 if (aniIdParam) {
                     const r = await fetch('https://graphql.anilist.co', {
                         method: 'POST',
@@ -417,7 +415,7 @@ router.get("/:type/:id", async (req, res) => {
                     media = j.data?.Media || null;
                 }
 
-                // (2) Title + season-year search (disambiguates remakes by year)
+                // Title + season-year search (disambiguates remakes by year)
                 if (!media) {
                     const tmdbYear = (data.first_air_date || "").substring(0, 4);
                     const query = `
@@ -436,7 +434,7 @@ router.get("/:type/:id", async (req, res) => {
                     media = malData.data?.Page?.media?.[0] || null;
                 }
 
-                // (3) Unfiltered title search (seasonYear is strict and can miss by a year)
+                // Unfiltered title search (seasonYear is strict and can miss by a year)
                 if (!media) {
                     const fb = await fetch('https://graphql.anilist.co', {
                         method: 'POST',
@@ -869,12 +867,6 @@ router.get("/:type/:id", async (req, res) => {
                         }
                     }
 
-                    /* ============================================================
-                       ENTRY POINT
-                       movie  -> single embed
-                       anime  -> VidPlus, flat episode list, in-player Sub/Dub
-                       tv     -> TMDB seasons + multi-server switcher
-                    ============================================================ */
                     function openPlayer() {
                         document.getElementById('playerModal').style.display = 'flex';
 
@@ -1011,6 +1003,7 @@ router.get("/:type/:id", async (req, res) => {
                                     </div>
                                 </div>\`;
                         }).join('');
+                        applyWatchedMarkers();
                     }
 
                     function playEpisode(season, episode) {
@@ -1027,16 +1020,6 @@ router.get("/:type/:id", async (req, res) => {
                     function getAnimeSrc(ep) {
                         const lang = animeDub ? 'dub' : 'sub';
 
-                        // ============================================================
-                        // NSFW PROVIDER — Hentai Ocean (slug-based embed).
-                        // HO is keyed by a per-video SLUG (e.g. "my-mother-1"), NOT by
-                        // AniList id, and has no title->slug search API. So we GUESS the
-                        // slug from the title: slugify + "-<ep>", matching their -1/-2
-                        // episode pattern. This HITS when their slug matches the title and
-                        // MISSES otherwise (shows their 404 in the iframe) — that's why the
-                        // secret-links section also has a Hentai Ocean search link as a
-                        // reliable fallback. Both nsfw servers below are slug variants.
-                        // ============================================================
                         if (animeServer === 'nsfw1')
                             return \`https://hentaiocean.com/embed/\${hentaiSlug(ep)}?la=1\`;
                         if (animeServer === 'nsfw2')
@@ -1052,9 +1035,7 @@ router.get("/:type/:id", async (req, res) => {
                         return \`https://tryembed.us.cc/embed/anime/\${anilistId}/\${ep}/\${lang}\`;
                     }
 
-                    // Build a Hentai Ocean-style slug from the title. Lowercase, strip
-                    // punctuation, hyphenate, and append the episode number (their pattern
-                    // is "<slug>-<ep>"). Pass null to omit the episode suffix.
+                    
                     function hentaiSlug(ep) {
                         const base = (currentTitle || '')
                             .toLowerCase()
@@ -1126,12 +1107,7 @@ router.get("/:type/:id", async (req, res) => {
                             || (tmdbAnimeEpisodes ? tmdbAnimeEpisodes.length : 0)
                             || animeEpisodes.length || 24;
 
-                        // Do we have AniList thumbnails? They're the only source guaranteed to align
-                        // with this exact entry. If present -> rich grid. If not -> clean numbered list
-                        // (clearer than showing mismatched/placeholder images that confuse people).
-                        // Use the grid only when AniList covers MOST episodes with thumbnails.
-                        // Partial coverage (e.g. One Piece: a few hundred of 1000+) would make a
-                        // patchy grid full of placeholder icons — a uniform list is cleaner there.
+
                         const thumbCount = animeEpisodes.filter(e => e && e.thumbnail).length;
                         const hasAniThumbs = count > 0 && (thumbCount / count) >= 0.6;
                         console.log('ANIME EP RENDER:', { count, thumbCount, ratio: (thumbCount/count).toFixed(2), mode: hasAniThumbs ? 'GRID' : 'CHIP', animeEpisodesLen: animeEpisodes.length, anilistEpisodeCount });
@@ -1200,6 +1176,7 @@ router.get("/:type/:id", async (req, res) => {
                                         </div>\`;
                                 }
                                 grid.innerHTML = chips;
+                                applyWatchedMarkers();
                             };
 
                             // Put a range selector into the season-select dropdown (reusing it).
@@ -1245,6 +1222,7 @@ router.get("/:type/:id", async (req, res) => {
                                 </div>\`;
                         }
                         document.getElementById('episode-grid').innerHTML = cards;
+                        applyWatchedMarkers();
                     }
 
                     function closePlayer() {
@@ -1287,15 +1265,71 @@ router.get("/:type/:id", async (req, res) => {
                                     episode: e
                                 })
                             });
-                        } catch (err) { /* best-effort; UI already updated */ }
+                        } catch (err) {
+                         console.log("MARK WATCHED ERROR: ", err); 
+                        }
+                    }
+
+                    async function unmarkWatched(season, episode) {
+                        const s = Number(season) || 1;
+                        const e = Number(episode);
+                        const key = (wpMediaType === 'tv' && e) ? ('S' + s + 'E' + e) : null;
+                        if (key) {
+                            watchedSet.delete(key);
+                            applyWatchedMarkers();
+                        }
+                        try {
+                            await fetch('/watch-progress/unmark', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    mediaType: wpMediaType,
+                                    mediaId: wpMediaId,
+                                    season: s,
+                                    episode: e
+                                })
+                            });
+                        } catch (err){
+                            console.log("UNMARKED WATCHED ERROR: ", err); 
+                        }
+                    }
+
+                    function parseEpKey(key) {
+                        const m = /^S(\\d+)E(\\d+)$/.exec(key || '');                        
+                        return m ? { season: Number(m[1]), episode: Number(m[2]) } : null;
                     }
 
                     function applyWatchedMarkers() {
-                        document.querySelectorAll('[data-epkey]').forEach(function (el) {
-                            if (watchedSet.has(el.getAttribute('data-epkey'))) {
-                                el.classList.add('watched');
-                            } else {
-                                el.classList.remove('watched');
+                       document.querySelectorAll('[data-epkey]').forEach(function (el) {
+                            const key = el.getAttribute('data-epkey');
+                            const isWatched = watchedSet.has(key);
+                            el.classList.toggle('watched', isWatched);
+ 
+                            const existing = el.querySelector('.watched-check');
+                            if (isWatched && !existing) {
+                                const badge = document.createElement('span');
+                                badge.className = 'watched-check';
+                                badge.textContent = '✓';
+                                badge.title = 'Mark as unwatched';
+ 
+                                const doUnwatch = function (ev) {
+                                    ev.preventDefault();
+                                    ev.stopPropagation();
+                                    if (ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+                                    const parsed = parseEpKey(key);
+                                    if (parsed) unmarkWatched(parsed.season, parsed.episode);
+                                };
+                                // mousedown fires before click; stopping it here keeps the
+                                // card's onclick (play) from ever triggering.
+                                badge.addEventListener('mousedown', function (ev) {
+                                    ev.stopPropagation();
+                                    if (ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+                                });
+                                badge.addEventListener('click', doUnwatch);
+ 
+                                el.appendChild(badge);
+                            } else if (!isWatched && existing) {
+                                existing.remove();
                             }
                         });
                     }
