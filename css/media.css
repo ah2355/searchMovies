@@ -644,6 +644,40 @@ body{
     cursor: pointer;
 }
 
+.episode-card.watched,
+.anime-ep-chip.watched {
+    position: relative;
+    opacity: 0.72;
+}
+ 
+.episode-card.watched::after,
+.anime-ep-chip.watched::after {
+    content: "✓";
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 18px;
+    height: 18px;
+    line-height: 18px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: bold;
+    color: #fff;
+    background: #21d07a;
+    border-radius: 50%;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+    z-index: 3;
+}
+ 
+.episode-card.watched {
+    border-color: #21d07a;
+}
+ 
+.anime-ep-chip.watched {
+    border: 1px solid #21d07a;
+}
+ 
+
 @media (max-width: 850px) {
     .navbar{
         margin-bottom: -5px;

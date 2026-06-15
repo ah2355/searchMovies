@@ -1661,8 +1661,6 @@ app.get("/anime-go", async (req, res) => {
  
     const norm = s => s.replace(/['’]/g, '').replace(/\s+/g, ' ').trim();
  
-    // Progressive title candidates (full, then trimmed) so multi-part / long
-    // titles still match the base TMDB entry.
     const candidates = [];
     const base = norm(rawTitle);
     candidates.push(base);
@@ -1805,6 +1803,66 @@ app.get('/api/backdrops', async (req, res) => {
         .map(m => ({ title: m.title, backdrop: m.backdrop_path }));
 
     res.json(backdrops);
+});
+
+app.post("/watch-progress/mark", async (req, res) => {
+    if (!req.session || !req.session.userId) {
+        return res.json({ ok: false, guest: true });
+    }
+    try {
+        const { mediaType, mediaId, aniId, title, poster, season, episode } = req.body;
+        if (!mediaType || !mediaId) {
+            return res.status(400).json({ ok: false, error: "missing mediaType/mediaId" });
+        }
+ 
+        const s = Number(season) || 1;
+        const e = Number(episode);
+        const epKey = (mediaType === "tv" && e) ? `S${s}E${e}` : null;
+ 
+        const update = {
+            $set: {
+                mediaType,
+                mediaId: String(mediaId),
+                aniId: aniId ? String(aniId) : "",
+                title: title || "",
+                poster: poster || "",
+                updatedAt: new Date()
+            }
+        };
+        if (epKey) {
+            update.$addToSet = { watchedEpisodes: epKey };
+            update.$set.lastSeason = s;
+            update.$set.lastEpisode = e;
+        }
+ 
+        await WatchProgress.findOneAndUpdate(
+            { user: req.session.userId, mediaType, mediaId: String(mediaId) },
+            update,
+            { upsert: true, new: true, setDefaultsOnInsert: true }
+        );
+ 
+        return res.json({ ok: true });
+    } catch (err) {
+        console.log("watch-progress/mark error:", err.message);
+        return res.status(500).json({ ok: false });
+    }
+});
+ 
+app.get("/watch-progress/:mediaType/:mediaId", async (req, res) => {
+    if (!req.session || !req.session.userId) {
+        return res.json({ watched: [] });
+    }
+    try {
+        const { mediaType, mediaId } = req.params;
+        const doc = await WatchProgress.findOne({
+            user: req.session.userId,
+            mediaType,
+            mediaId: String(mediaId)
+        });
+        return res.json({ watched: doc ? doc.watchedEpisodes : [] });
+    } catch (err) {
+        return res.json({ watched: [] });
+    }
 });
 
 app.listen(port, (err) => {

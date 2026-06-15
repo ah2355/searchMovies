@@ -826,6 +826,10 @@ router.get("/:type/:id", async (req, res) => {
                     let currentEpisode = null;
                     const currentTitle = '${displayEscapedTitle}';
                     const currentImdbId = '${imdbId || ''}';
+                    const wpMediaType = '${type}';         
+                    const wpMediaId = '${id}';
+                    const wpAniId = '${aniIdParam || ''}';
+                    const wpPoster = '${displayPoster}';
 
                     /* ---------------- anime (VidPlus) state ---------------- */
                     const isAnime = ${isAnime ? 'true' : 'false'};
@@ -993,7 +997,7 @@ router.get("/:type/:id", async (req, res) => {
                             const rating = ep.vote_average ? Number(ep.vote_average).toFixed(1) : 'N/A';
                             const airDate = ep.air_date ? ep.air_date.substring(0, 7) : '';
                             return \`
-                                <div class="episode-card" onclick="playEpisode(\${seasonNum}, \${ep.episode_number})">
+                                <div class="episode-card" data-epkey="S\${seasonNum}E\${ep.episode_number}" onclick="playEpisode(\${seasonNum}, \${ep.episode_number})">
                                     <div style="position:relative;">
                                         <img src="\${thumb}" alt="\${name}" class="episode-thumb">
                                         <div class="episode-overlay"><span style="font-size:26px;">▶</span></div>
@@ -1010,6 +1014,7 @@ router.get("/:type/:id", async (req, res) => {
                     }
 
                     function playEpisode(season, episode) {
+                        markWatched(season, episode);
                         currentSeason = season;
                         currentEpisode = episode;
                         document.getElementById('player-title').innerText =
@@ -1108,6 +1113,7 @@ router.get("/:type/:id", async (req, res) => {
 
                     function renderAnimeIframe(ep) {
                         currentAnimeEp = ep;
+                        markWatched(1, ep);
                         document.getElementById('vidlink-player').innerHTML =
                             renderAnimeControls() +
                             \`<iframe width="100%" height="450" src="\${getAnimeSrc(ep)}" frameborder="0" allowfullscreen referrerpolicy="origin"></iframe>\`;
@@ -1185,7 +1191,7 @@ router.get("/:type/:id", async (req, res) => {
                                         if (cleaned) title = cleaned;
                                     }
                                     chips += \`
-                                        <div class="anime-ep-chip" onclick="renderAnimeIframe(\${i})"
+                                        <div class="anime-ep-chip" data-epkey="S1E\${i}" onclick="renderAnimeIframe(\${i})"
                                             title="\${title ? 'Episode ' + i + ': ' + title.replace(/"/g, '') : 'Episode ' + i}"
                                             style="padding:12px 6px; cursor:pointer; background:#1c1c1c; border-radius:8px;
                                                    text-align:center; font-size:14px; font-weight:bold; color:#eee; transition:background 0.15s;"
@@ -1227,7 +1233,7 @@ router.get("/:type/:id", async (req, res) => {
                                 ? \`<img src="\${se.thumbnail}" alt="Episode \${i}" class="episode-thumb">\`
                                 : \`<div class="episode-thumb" style="display:flex; align-items:center; justify-content:center; background:#1c1c1c; color:#555; font-size:20px; font-weight:bold;">E\${i}</div>\`;
                             cards += \`
-                                <div class="episode-card" onclick="renderAnimeIframe(\${i})" style="cursor:pointer;">
+                               <div class="episode-card" data-epkey="S1E\${i}" onclick="renderAnimeIframe(\${i})" style="cursor:pointer;">
                                     <div style="position:relative;">
                                         \${media}
                                         <div class="episode-overlay"><span style="font-size:26px;">▶</span></div>
@@ -1247,6 +1253,54 @@ router.get("/:type/:id", async (req, res) => {
                         currentSeason = null;
                         currentEpisode = null;
                     }
+
+                    let watchedSet = new Set();
+ 
+                    async function loadWatched() {
+                        try {
+                            const r = await fetch('/watch-progress/' + wpMediaType + '/' + wpMediaId);
+                            const d = await r.json();
+                            watchedSet = new Set(d.watched || []);
+                            applyWatchedMarkers();
+                        } catch (e) { /* not logged in / no data — fine */ }
+                    }
+
+                    async function markWatched(season, episode) {
+                        const s = Number(season) || 1;
+                        const e = Number(episode);
+                        const key = (wpMediaType === 'tv' && e) ? ('S' + s + 'E' + e) : null;
+                        if (key) {
+                            watchedSet.add(key);
+                            applyWatchedMarkers();
+                        }
+                        try {
+                            await fetch('/watch-progress/mark', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    mediaType: wpMediaType,
+                                    mediaId: wpMediaId,
+                                    aniId: wpAniId,
+                                    title: currentTitle,
+                                    poster: wpPoster,
+                                    season: s,
+                                    episode: e
+                                })
+                            });
+                        } catch (err) { /* best-effort; UI already updated */ }
+                    }
+
+                    function applyWatchedMarkers() {
+                        document.querySelectorAll('[data-epkey]').forEach(function (el) {
+                            if (watchedSet.has(el.getAttribute('data-epkey'))) {
+                                el.classList.add('watched');
+                            } else {
+                                el.classList.remove('watched');
+                            }
+                        });
+                    }
+        
+                loadWatched();
                 </script>
             </html>`);
 
