@@ -400,7 +400,7 @@ app.get('/', async (req,res) => {
                     <div class="popular-poster-container"> 
                         <img class="popular-movie-img" src="${posterPath}" alt="${movieTitle} poster">
                         <div class="play-overlay">
-                            <div class="play-icon">▶</div>
+                            <div class="play-icon"><i class="fa-solid fa-play"></i></div>
                         </div>
                     </div>
                     <div class="movieInfo">
@@ -443,7 +443,7 @@ app.get('/', async (req,res) => {
                     <div class="popular-poster-container"> 
                         <img class="popular-movie-img" src="${posterPath}" alt="${seriesTitle} poster">
                         <div class="play-overlay">
-                            <div class="play-icon">▶</div>
+                            <div class="play-icon"><i class="fa-solid fa-play"></i></div>
                         </div>
                     </div>
                     <div class="movieInfo">
@@ -488,7 +488,7 @@ app.get('/', async (req,res) => {
                     <div class="popular-poster-container"> 
                         <img class="popular-movie-img" src="${posterPath}" alt="${seriesTitle} poster">
                         <div class="play-overlay">
-                            <div class="play-icon">▶</div>
+                            <div class="play-icon"><i class="fa-solid fa-play"></i></div>
                         </div>
                     </div>
                     <div class="movieInfo">
@@ -535,7 +535,7 @@ app.get('/', async (req,res) => {
                     <div class="popular-poster-container"> 
                         <img class="popular-movie-img" src="${posterPath}" alt="${seriesTitle} poster">
                         <div class="play-overlay">
-                            <div class="play-icon">▶</div>
+                            <div class="play-icon"><i class="fa-solid fa-play"></i></div>
                         </div>
                     </div>
                     <div class="movieInfo">
@@ -577,7 +577,7 @@ app.get('/', async (req,res) => {
             <div class="popular-movie-card" onclick="window.location.href='${href}'">
                 <div class="popular-poster-container">
                     <img class="popular-movie-img" src="${posterPath}" alt="${title} poster">
-                    <div class="play-overlay"><div class="play-icon">▶</div></div>
+                    <div class="play-overlay"><div class="play-icon"><i class="fa-solid fa-play"></i></div></div>
                 </div>
                 <div class="movieInfo">
                     <p class="movieTitleText">${title}</p>
@@ -621,7 +621,7 @@ app.get('/', async (req,res) => {
             <div class="popular-movie-card" onclick="window.location.href='${href}'">
                 <div class="popular-poster-container">
                     <img class="popular-movie-img" src="${poster}" alt="${title} poster">
-                    <div class="play-overlay"><div class="play-icon">▶</div></div>
+                    <div class="play-overlay"><div class="play-icon"><i class="fa-solid fa-play"></i></div></div>
                 </div>
                 <div class="movieInfo">
                     <p class="movieTitleText">${title}</p>
