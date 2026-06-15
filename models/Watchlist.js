@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const watchlistSchema = new mongoose.Schema({
-    user: String,
+    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     imdbId: String,
     title: String,
     year: String,

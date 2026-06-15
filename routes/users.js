@@ -74,7 +74,7 @@ router.get("/login", (req,res) => {
                     <div class="nav-right" id="navLinks">
                         <a href= "https://github.com/ah2355" target="_blank" class="nav-item">About Dev</a>
                         <a href="#feature-heading" class="nav-item">Features</a>
-                        <a class="nav-item">Tools Used</a>
+                        <a href="#tools-heading" class="nav-item">Tools Used</a>
 
                     </div>
                 </nav>

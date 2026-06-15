@@ -877,6 +877,7 @@ router.get("/:type/:id", async (req, res) => {
                             document.getElementById('player-title').innerText = currentTitle;
                             document.getElementById('season-episode-picker').style.display = 'none';
                             renderIframe(getMovieSrc(currentSource));
+                            markWatched();
                             return;
                         }
 

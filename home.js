@@ -45,7 +45,7 @@ const redirectLogin = (req, res, next) => {
 };
 
 app.use(session({
-    secret: 'hehehaha',
+    secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({ 
