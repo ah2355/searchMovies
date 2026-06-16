@@ -284,6 +284,7 @@ router.get("/:type/:id", async (req, res) => {
     let streamingEpisodes = [];
     let animeSeasonNum = null; // TMDB season number parsed from the AniList title (for thumbnails)
     let bestTmdbSeason = null; // TMDB season matched by air date (more reliable than the number)
+    let tmdbEpisodeStills = []; // TMDB still_path thumbnails for the matched season (server-fetched)
     let aniDisplayTitle = null;
     let aniDisplayCover = null;
     let aniDisplayOverview = null;
@@ -505,6 +506,22 @@ router.get("/:type/:id", async (req, res) => {
                     if (best !== null && bestDiff <= 120 * 86400 * 1000) bestTmdbSeason = best;
                 }
 
+                // Pre-fetch TMDB stills for the matched season so the episode grid always shows
+                // thumbnails from the correct season. AniList's streamingEpisodes are unreliable —
+                // they can contain Crunchyroll playlist data starting from Season 1 even for later
+                // season entries (e.g. JoJo entry 20474 returns Season 1 thumbnails).
+                if (bestTmdbSeason) {
+                    try {
+                        const api_key = process.env.TMDB_API_KEY;
+                        const sr = await fetch(`https://api.themoviedb.org/3/tv/${id}/season/${bestTmdbSeason}?api_key=${api_key}`);
+                        const sd = await sr.json();
+                        tmdbEpisodeStills = (sd.episodes || []).map(e => ({
+                            title: e.name,
+                            still: e.still_path ? `https://image.tmdb.org/t/p/w300${e.still_path}` : null
+                        }));
+                    } catch { /* non-fatal — falls back to AniList thumbnails */ }
+                }
+
                 // Only override page display when the user arrived via a specific season (?aniId).
                 // Other arrivals (search, direct link) keep the TMDB show's display as before.
                 if (aniIdParam && media) {
@@ -578,7 +595,7 @@ router.get("/:type/:id", async (req, res) => {
         const nsfwQS = (req.query.nsfw === 'true' || req.session.nsfw) ? '&nsfw=true' : '';
         const relatedSeasonsHtml = (isAnime && relatedSeasons.length > 1) ? `
             <h3 class="overview-heading">Seasons</h3>
-            <div class="related-seasons" style="display:flex; gap:14px; overflow-x:auto; padding:6px 2px 14px;">
+            <div class="related-seasons">
                 ${relatedSeasons.map(rs => `
                     <a href="/media/tv/${id}?aniId=${rs.id}${nsfwQS}"
                        style="flex:0 0 auto; width:120px; text-decoration:none; color:white;
@@ -831,6 +848,7 @@ router.get("/:type/:id", async (req, res) => {
                     const anilistId = ${anilistId || 'null'};
                     const anilistEpisodeCount = ${anilistEpisodeCount || 'null'};
                     const animeEpisodes = ${JSON.stringify(streamingEpisodes)};
+                    const tmdbEpisodeStills = ${JSON.stringify(tmdbEpisodeStills)};
                     const useAnimePlayer = isAnime && anilistId;
                     let currentAnimeEp = 1;
                     let animeDub = false;
@@ -961,7 +979,13 @@ router.get("/:type/:id", async (req, res) => {
                             const label = (s.name && s.name !== defaultName) ? s.name : defaultName;
                             return \`<option value="\${s.season_number}">\${label} (\${s.episode_count} eps)</option>\`;
                         }).join('');
-                        if (seasons.length > 0) handleSeasonChange(seasons[0].season_number);
+                        if (seasons.length > 0) {
+                            const targetSeason = (animeSeasonNum && seasons.some(s => s.season_number === animeSeasonNum))
+                                ? animeSeasonNum
+                                : seasons[0].season_number;
+                            select.value = targetSeason;
+                            handleSeasonChange(targetSeason);
+                        }
                     }
 
                     async function handleSeasonChange(seasonNum) {
@@ -1107,11 +1131,13 @@ router.get("/:type/:id", async (req, res) => {
 
                         const thumbCount = animeEpisodes.filter(e => e && e.thumbnail).length;
                         const hasAniThumbs = count > 0 && (thumbCount / count) >= 0.6;
-                        console.log('ANIME EP RENDER:', { count, thumbCount, ratio: (thumbCount/count).toFixed(2), mode: hasAniThumbs ? 'GRID' : 'CHIP', animeEpisodesLen: animeEpisodes.length, anilistEpisodeCount });
+                        const hasTmdbStills = tmdbEpisodeStills.length > 0 && tmdbEpisodeStills.some(s => s && s.still);
+                        const hasGridThumbs = hasTmdbStills || hasAniThumbs;
+                        console.log('ANIME EP RENDER:', { count, thumbCount, ratio: (thumbCount/count).toFixed(2), mode: hasGridThumbs ? 'GRID' : 'CHIP', hasTmdbStills, animeEpisodesLen: animeEpisodes.length, anilistEpisodeCount });
 
                         document.getElementById('episode-count').innerText = count + ' episodes';
 
-                        if (!hasAniThumbs) {
+                        if (!hasGridThumbs) {
                             // ---- CHIP MODE (no usable thumbnails) ----
                             // Build episode RANGES so long shows (One Piece) get a "jump to season"
                             // selector instead of one giant wall of chips. Ranges come from TMDB
@@ -1191,20 +1217,24 @@ router.get("/:type/:id", async (req, res) => {
                             return;
                         }
 
-                        // ---- GRID MODE (AniList thumbnails present) ----
+                        // ---- GRID MODE (TMDB stills preferred; AniList as fallback) ----
                         let cards = '';
                         for (let i = 1; i <= count; i++) {
                             const se = animeEpisodes[i - 1];
-                            const hasThumb = !!(se && se.thumbnail);
+                            const ts = tmdbEpisodeStills[i - 1];
+                            // TMDB stills are from the correct season (fetched server-side using
+                            // bestTmdbSeason). AniList streamingEpisodes can contain wrong-season
+                            // thumbnails when a sequel entry's Crunchyroll data starts from ep 1
+                            // of the overall series rather than from this season.
+                            const thumbSrc = (ts && ts.still) || (se && se.thumbnail) || null;
+                            const hasThumb = !!thumbSrc;
+                            const tmdbTitle = ts && ts.title ? ts.title : null;
+                            const aniTitle = se && se.title ? se.title.replace(/^episode\\s*\\d+\\s*[-–—:]*\\s*/i, '').trim() : '';
                             let label = 'Episode ' + i;
-                            if (se && se.title) {
-                                const cleaned = se.title.replace(/^episode\\s*\\d+\\s*[-–—:]*\\s*/i, '').trim();
-                                if (cleaned) label = 'E' + i + ' • ' + cleaned;
-                            }
-                            // Real thumbnail when AniList has it; otherwise a neutral block that
-                            // matches the card shape (no stretched icon, no broken-image look).
+                            const epTitle = tmdbTitle || aniTitle;
+                            if (epTitle) label = 'E' + i + ' • ' + epTitle;
                             const media = hasThumb
-                                ? \`<img src="\${se.thumbnail}" alt="Episode \${i}" class="episode-thumb">\`
+                                ? \`<img src="\${thumbSrc}" alt="Episode \${i}" class="episode-thumb">\`
                                 : \`<div class="episode-thumb" style="display:flex; align-items:center; justify-content:center; background:#1c1c1c; color:#555; font-size:20px; font-weight:bold;">E\${i}</div>\`;
                             cards += \`
                                <div class="episode-card" data-epkey="S1E\${i}" onclick="renderAnimeIframe(\${i})" style="cursor:pointer;">
