@@ -140,8 +140,8 @@ router.get("/results", async (req, res) => {
                     <a id="elemNav" href="/" class="nav-item">Home</a>
                     <a href="/favorites" class="nav-item">Favorites</a>
                     <form id="searchForm" action="/results" method="get">
-                        <input type="text" name="q" id="movieName" placeholder="Search">
-                        <button id="searchBtn"><img id="srchImg2" src="images/search-symbol-wbg.png" alt="Search"></button>
+                        <input type="text" name="q" id="movieName" placeholder="Search" value="${searchMovie.replace(/"/g, '&quot;')}">
+                        <button id="searchBtn"><i class="fa-solid fa-magnifying-glass"></i></button>
                     </form>
                     </div>
                 </nav>

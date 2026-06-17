@@ -20,7 +20,7 @@ router.get('/', async (req,res) => {
     displayName = displayName.charAt(0).toUpperCase() + displayName.substring(1);
     
     const authAction = isGuest
-        ? `<a href="/users/login" class="nav-item" id="login-link">Log In</a>`
+        ? `<a href="/users/login" class="nav-item" id="login-link"><i class="fa-solid fa-arrow-right-to-bracket" style="color:red;"></i> Log In</a>`
         : `<a href="/users/login" class="nav-item"><i class="fa-solid fa-user" style="color:red"></i> Account</a>`;
     
     const api_key = process.env.TMDB_API_KEY;

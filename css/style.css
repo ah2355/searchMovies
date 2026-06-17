@@ -875,22 +875,39 @@ button{
   color: rgb(223, 211, 39);
 }
 
-#searchForm{
+#searchForm {
   display: flex;
   align-items: center;
+  gap: 6px;
 }
 
-#searchForm #movieName{
-  border-radius: 5px;
-  padding: 5px;
+#searchForm #movieName {
+  border-radius: 8px;
+  padding: 8px 12px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(0,0,0,0.4);
+  color: white;
+  font-size: 14px;
+  outline: none;
 }
 
-#srchImg2{
-  position: relative;
-  width: 15px;
-  height: 13px;
-  right: 24px;
-  top: 2px;
+#searchForm #movieName:focus {
+  border-color: #fc466b;
+}
+
+#searchForm #searchBtn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 6px 8px;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+#searchForm #searchBtn:hover {
+  opacity: 1;
 }
 
 /* Favorite navbar */
@@ -1894,25 +1911,15 @@ button{
     border-radius: 6px;
   }
 
-  /* Search button sits inline; no absolute pull. */
   .navbar2 .nav-links2 #searchForm #searchBtn {
     position: static;
     width: auto;
     height: auto;
     flex-shrink: 0;
-    padding: 6px;
+    padding: 6px 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-  }
-
-  /* Reset the icon's desktop offset so it centers in the button. */
-  .navbar2 .nav-links2 #searchForm #srchImg2 {
-    position: static;
-    right: auto;
-    top: auto;
-    width: 18px;
-    height: 18px;
   }
 
   .movie-grid {
