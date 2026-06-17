@@ -80,6 +80,7 @@ router.get("/login", (req,res) => {
                         <a href="#feature-heading" class="nav-item">Features</a>
                         <a href="#tools-heading" class="nav-item">Tools Used</a>
                         <a href= "https://github.com/ah2355" target="_blank" class="nav-item">About Dev</a>
+                        <a href="/users/privacy" class="nav-item"><i class="fa-solid fa-circle-info"></i></a>
 
                     </div>
                 </nav>
@@ -343,7 +344,7 @@ router.get("/privacy", (req, res) => {
                     <p style="color:#ccc; line-height:1.7;">We use a session cookie to keep you logged in. No tracking or advertising cookies are used.</p>
 
                     <h3 style="margin-top:20px;">6. Data Deletion</h3>
-                    <p style="color:#ccc; line-height:1.7;">You may request deletion of your account and all associated data by contacting us at afifiram@gmail.com.</p>
+                    <p style="color:#ccc; line-height:1.7;">You may request deletion of your account and all associated data by contacting us at wolfro979@gmail.com</p>
 
                     <h3 style="margin-top:20px;">7. Contact</h3>
                     <p style="color:#ccc; line-height:1.7;">If you have questions about this privacy policy, contact us at afifiram@gmail.com.</p>
