@@ -291,4 +291,67 @@ router.post("/logout", (req, res) => {
     }
 });
 
+router.get("/privacy", (req, res) => {
+    res.send(`
+    <!DOCTYPE html>
+    <html lang="en">
+        <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <link rel="stylesheet" href="/css/login.css">
+            <link rel="icon" type="image/x-icon" href="/images/icon.png">
+            <title>Privacy Policy - SearchMovie</title>
+        </head>
+        <body class="loginBody">
+            <nav class="navbar">
+                <div class="nav-left">
+                    <img src="/images/icon.png" alt="Logo" class="logoImg2">
+                    <a href="/users/login" id="titleLink">
+                        <span class="nav-title">SearchMovie</span>
+                    </a>
+                </div>
+            </nav>
+
+            <div class="auth-wrapper" style="align-items:flex-start; margin-top:20px;">
+                <div id="loginContainer" style="max-width:700px; width:90%; text-align:left;">
+                    <h2 style="text-align:center; font-size:28px;">Privacy Policy</h2>
+                    <p style="color:#aaa; text-align:center; margin-bottom:25px;">Last updated: June 17, 2026</p>
+
+                    <h3 style="margin-top:20px;">1. Information We Collect</h3>
+                    <p style="color:#ccc; line-height:1.7;">SearchMovie collects only the information necessary to provide our service:</p>
+                    <ul style="color:#ccc; line-height:1.9; padding-left:20px;">
+                        <li>Account credentials (username and password) for authentication</li>
+                        <li>Favorites and watchlist data you choose to save</li>
+                        <li>Watch progress to enable the "continue watching" feature</li>
+                    </ul>
+
+                    <h3 style="margin-top:20px;">2. How We Use Your Information</h3>
+                    <p style="color:#ccc; line-height:1.7;">Your data is used solely to provide and improve the SearchMovie experience, including maintaining your favorites, watchlist, and watch progress across sessions.</p>
+
+                    <h3 style="margin-top:20px;">3. Data Storage</h3>
+                    <p style="color:#ccc; line-height:1.7;">Your data is stored securely in our database. Passwords are hashed and never stored in plain text.</p>
+
+                    <h3 style="margin-top:20px;">4. Third-Party Services</h3>
+                    <p style="color:#ccc; line-height:1.7;">SearchMovie uses the following third-party APIs to provide media information:</p>
+                    <ul style="color:#ccc; line-height:1.9; padding-left:20px;">
+                        <li>TMDB (The Movie Database) for movie and TV show data</li>
+                        <li>AniList for anime-related data</li>
+                    </ul>
+                    <p style="color:#ccc; line-height:1.7;">We do not sell, share, or transfer your personal data to any third parties.</p>
+
+                    <h3 style="margin-top:20px;">5. Cookies</h3>
+                    <p style="color:#ccc; line-height:1.7;">We use a session cookie to keep you logged in. No tracking or advertising cookies are used.</p>
+
+                    <h3 style="margin-top:20px;">6. Data Deletion</h3>
+                    <p style="color:#ccc; line-height:1.7;">You may request deletion of your account and all associated data by contacting us at afifiram@gmail.com.</p>
+
+                    <h3 style="margin-top:20px;">7. Contact</h3>
+                    <p style="color:#ccc; line-height:1.7;">If you have questions about this privacy policy, contact us at afifiram@gmail.com.</p>
+                </div>
+            </div>
+        </body>
+    </html>
+    `);
+});
+
 module.exports = router;
