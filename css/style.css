@@ -1981,6 +1981,13 @@ button{
     margin-bottom: 10px;
   }
 
+  .time-slot {
+    display: flex;
+    align-items: flex-start;
+    gap:0px;
+    margin-bottom: 32px;
+  }
+
   .air-card {
     display: flex;
     gap: 10px;
