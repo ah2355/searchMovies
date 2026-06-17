@@ -69,12 +69,17 @@ router.get("/login", (req,res) => {
                         </a>
                     </div>
 
-                    <button class="hamburger" id="hamburger">☰</button>
+                    <button class="hamburger" id="hamburger">
+                        <span class="bar"></span>
+                        <span class="bar"></span>
+                        <span class="bar"></span>
+                    </button>
 
                     <div class="nav-right" id="navLinks">
-                        <a href= "https://github.com/ah2355" target="_blank" class="nav-item">About Dev</a>
+                        <a href="/" class="nav-item">Home Page</a>
                         <a href="#feature-heading" class="nav-item">Features</a>
                         <a href="#tools-heading" class="nav-item">Tools Used</a>
+                        <a href= "https://github.com/ah2355" target="_blank" class="nav-item">About Dev</a>
 
                     </div>
                 </nav>
@@ -155,8 +160,17 @@ router.get("/login", (req,res) => {
                     const hamburger = document.getElementById('hamburger');
                     const navLinks = document.getElementById('navLinks');
 
-                    hamburger.addEventListener('click', () => {
+                    hamburger.addEventListener('click', (e) => {
+                        e.stopPropagation();
                         navLinks.classList.toggle('active');
+                        hamburger.classList.toggle('active');
+                    });
+
+                    document.addEventListener('click', (e) => {
+                        if (!hamburger.contains(e.target) && !navLinks.contains(e.target) && navLinks.classList.contains('active')) {
+                            navLinks.classList.remove('active');
+                            hamburger.classList.remove('active');
+                        }
                     });
 
                     const revealEls = document.querySelectorAll('.reveal');

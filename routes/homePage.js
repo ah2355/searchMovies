@@ -207,7 +207,11 @@ router.get('/', async (req,res) => {
                                     <div id="item-left">
                                         <span class="nav-title">SearchMovie</span>
                                     </div>
-                                    <button class="hamburger" id="hamburger">☰</button>
+                                    <button class="hamburger" id="hamburger">
+                                        <span class="bar"></span>
+                                        <span class="bar"></span>
+                                        <span class="bar"></span>
+                                    </button>
 
                                     <div class="nav-links" id="navLinks">
                                         <span class="nav-greeting">Hello, ${displayName}!</span>

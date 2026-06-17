@@ -11,7 +11,7 @@
         btn.className = 'hamburger2';
         btn.setAttribute('aria-label', 'Menu');
         btn.setAttribute('aria-expanded', 'false');
-        btn.innerHTML = '☰';
+        btn.innerHTML = '<span class="bar"></span><span class="bar"></span><span class="bar"></span>';
 
         // Insert it as the last child of the navbar (CSS positions it).
         nav.appendChild(btn);
@@ -20,7 +20,7 @@
             e.stopPropagation();
             const open = links.classList.toggle('open');
             btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-            btn.innerHTML = open ? '✕' : '☰';
+            btn.classList.toggle('active', open);
         });
 
         // Close the menu when tapping outside it.
@@ -28,7 +28,7 @@
             if (!nav.contains(e.target) && links.classList.contains('open')) {
                 links.classList.remove('open');
                 btn.setAttribute('aria-expanded', 'false');
-                btn.innerHTML = '☰';
+                btn.classList.remove('active');
             }
         });
     }

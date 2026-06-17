@@ -134,9 +134,30 @@ body{
   display: none;
   background: none;
   border: none;
-  font-size: 24px;
-  color: white;
   cursor: pointer;
+  padding: 6px;
+}
+
+.hamburger .bar {
+  display: block;
+  width: 25px;
+  height: 3px;
+  background: white;
+  border-radius: 2px;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  margin: 5px 0;
+}
+
+.hamburger.active .bar:nth-child(1) {
+  transform: translateY(8px) rotate(45deg);
+}
+
+.hamburger.active .bar:nth-child(2) {
+  opacity: 0;
+}
+
+.hamburger.active .bar:nth-child(3) {
+  transform: translateY(-8px) rotate(-45deg);
 }
 
 #logout-link-btn{
@@ -1394,11 +1415,30 @@ button{
   display: none;
   background: none;
   border: none;
-  font-size: 24px;
-  color: white;
   cursor: pointer;
-  line-height: 1;
-  padding: 4px 8px;
+  padding: 6px;
+}
+
+.hamburger2 .bar {
+  display: block;
+  width: 25px;
+  height: 3px;
+  background: white;
+  border-radius: 2px;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  margin: 5px 0;
+}
+
+.hamburger2.active .bar:nth-child(1) {
+  transform: translateY(8px) rotate(45deg);
+}
+
+.hamburger2.active .bar:nth-child(2) {
+  opacity: 0;
+}
+
+.hamburger2.active .bar:nth-child(3) {
+  transform: translateY(-8px) rotate(-45deg);
 }
 
 @keyframes dropIn {

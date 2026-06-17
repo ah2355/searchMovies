@@ -14,11 +14,13 @@ html {
 
 .navbar {
   display: flex;
-  justify-content: space-between; 
+  justify-content: space-between;
+  flex-wrap: wrap;
   align-items: center;            
   background-color: rgba(0, 0, 0, 0.2); 
   padding: 15px 30px;             
   margin-bottom: 40px;
+  animation: dropIn 0.4s ease-out  forwards;
 }
 
 #titleLink{
@@ -62,9 +64,31 @@ html {
   display: none;
   background: none;
   border: none;
-  font-size: 24px;
-  color: white;
   cursor: pointer;
+  z-index: 999;
+  padding: 6px;
+}
+
+.hamburger .bar {
+  display: block;
+  width: 25px;
+  height: 3px;
+  background: white;
+  border-radius: 2px;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  margin: 5px 0;
+}
+
+.hamburger.active .bar:nth-child(1) {
+  transform: translateY(8px) rotate(45deg);
+}
+
+.hamburger.active .bar:nth-child(2) {
+  opacity: 0;
+}
+
+.hamburger.active .bar:nth-child(3) {
+  transform: translateY(-8px) rotate(-45deg);
 }
 
 .auth-wrapper {
@@ -215,6 +239,7 @@ h2 {
     justify-content: center;
     flex-wrap: wrap;
     gap: 25px;
+    margin-bottom: 150px;
 }
 
 #feature-section{
@@ -373,6 +398,19 @@ h2 {
  .hamburger {
     display: block;
     margin-right: -20px;
+  }
+
+  .navbar{
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0.2);
+    padding: 15px 30px;
+    margin-bottom: 40px;
+    animation: dropIn 0.4s ease-out  forwards;
+    position: relative;
+    z-index: 1001;
   }
 
   .nav-right { 
