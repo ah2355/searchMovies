@@ -21,7 +21,7 @@ router.get('/', async (req,res) => {
     
     const authAction = isGuest
         ? `<a href="/users/login" class="nav-item" id="login-link">Log In</a>`
-        : `<a href="/users/login" class="nav-item"><i class="fa-solid fa-user"></i> Account</a>`;
+        : `<a href="/users/login" class="nav-item"><i class="fa-solid fa-user" style="color:red"></i> Account</a>`;
     
     const api_key = process.env.TMDB_API_KEY;
     const page = Number(req.query.page) || 1;
@@ -213,9 +213,9 @@ router.get('/', async (req,res) => {
 
                                     <div class="nav-links" id="navLinks">
                                         <span class="nav-greeting">Hello, ${displayName}!</span>
-                                        <a href="/favorites" id="fav-list" class="nav-item">Favorite List</a>
+                                        <a href="/favorites" id="fav-list" class="nav-item"><i class="fa-solid fa-heart" style="color:red"></i> Favorite List</a>
                                         <div class="genre-wrapper">
-                                            <button type="button" class="nav-item" id="browseBtn"><p>Browse</p></button>
+                                            <button type="button" class="nav-item" id="browseBtn"><p><i class="fa-solid fa-border-all" style="color:red;"></i> Browse</p></button>
                                             <div id="browseBox" class="browse-box hidden">
                                                 <a href="/my-watchlist"><i class="fa-solid fa-bookmark"></i> My Watchlist</a>
                                                 <a href="/airing"><i class="fa-solid fa-tv"></i> Airing Today</a>
