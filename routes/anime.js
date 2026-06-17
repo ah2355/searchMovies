@@ -108,8 +108,8 @@ router.get("/anime", async (req, res) => {
                 <div class="nav-links2">
                     <a href="/" class="nav-item">Home</a>
                     <a href="/favorites" class="nav-item">Favorites</a>
-                    <a href="/toggle-nsfw" class="nav-item" style="border:1px solid ${req.session.nsfw ? '#e50914' : '#555'}; border-radius:6px; padding:4px 10px; font-size:12px;">
-                        🔞 NSFW Anime ${req.session.nsfw ? 'ON' : 'OFF'}
+                    <a href="/toggle-nsfw" class="nav-item nsfw-btn" style="border:1px solid ${req.session.nsfw ? '#e50914' : '#555'};">
+                        🔞 NSFW ${req.session.nsfw ? 'ON' : 'OFF'}
                     </a>
                 </div>
             </nav>

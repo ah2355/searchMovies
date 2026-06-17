@@ -425,8 +425,9 @@ h2 {
     z-index: 1000;
   }
   
-  .nav-right.active { 
+  .nav-right.active {
     display: flex !important;
+    align-items: center;
     text-align: center;
   }
   

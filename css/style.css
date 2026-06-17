@@ -1788,6 +1788,7 @@ button{
   .nav-links2{
     display: flex;
     align-items: center;
+    justify-content: center;
     gap:5px;
   }
 
@@ -1810,7 +1811,7 @@ button{
     left: 0;
     width: 100%;
     flex-direction: column;
-    align-items: stretch;
+    align-items: center;
     gap: 0;
     background: #1a1a1a;
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -1827,7 +1828,7 @@ button{
   .navbar2 .nav-links2 > a,
   .navbar2 .nav-links2 .nav-item {
     width: 100%;
-    text-align: left;
+    text-align: center;
     padding: 12px 18px;
     border-radius: 0;
   }
@@ -1835,6 +1836,14 @@ button{
   .navbar2 .nav-links2 > a:hover,
   .navbar2 .nav-links2 .nav-item:hover {
     background-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .navbar2 .nav-links2 .nsfw-btn {
+    width: auto;
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-size: 12px;
+    margin: 6px 0;
   }
 
   .navbar2 .nav-links2 #searchForm {
