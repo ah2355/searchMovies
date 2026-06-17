@@ -131,6 +131,7 @@ router.get("/results", async (req, res) => {
                 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
                 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
                 <script src="/misc/navMobile.js" defer></script>
+                <script src="/misc/showModal.js"></script>
             </head>
             <body>
                 <nav class="navbar2">
@@ -227,8 +228,7 @@ router.get("/results", async (req, res) => {
 
                 async function addFavorite(btn, title, year, imdbId, genres, rating, image, certification) {
                     if (isGuest) {
-                        alert("Please log in to add favorites!");
-                        window.location.href = "/users/login";
+                        showLoginModal();
                         return;
                     }
                     const isActive = btn.classList.toggle('active');
@@ -242,8 +242,7 @@ router.get("/results", async (req, res) => {
 
                 async function addWatchlist(btn, title, year, imdbId, genres, rating, image, certification, mediaType) {
                     if (isGuest) {
-                        alert("Please log in to use watchlist!");
-                        window.location.href = "/users/login";
+                        showLoginModal();
                         return;
                     }
                     btn.classList.toggle('active');
@@ -463,8 +462,7 @@ router.get("/discover", async(req, res) => {
             async function addFavorite(btn, title, year, imdbId, genres, rating, image, certification) {
     
                 if (isGuest) {
-                    alert("Please log in to add favorites!");
-                    window.location.href = "/users/login";
+                    showLoginModal();
                     return;
                 }
 
@@ -486,8 +484,7 @@ router.get("/discover", async(req, res) => {
             
             async function addWatchlist(btn, title, year, imdbId, genres, rating, image, certification, mediaType) {
                 if (isGuest) {
-                    alert("Please log in to use watchlist!");
-                    window.location.href = "/users/login";
+                    showLoginModal();
                     return;
                 }
                 btn.classList.toggle('active');

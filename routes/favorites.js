@@ -18,6 +18,7 @@ router.get("/", async (req, res) => {
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="stylesheet" href="/css/style.css">
         <link rel="icon" type="image/x-icon" href="images/icon.png">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
         <title>Favorite List</title>
       </head>
       <body>
@@ -30,7 +31,7 @@ router.get("/", async (req, res) => {
 
         <div style="text-align:center; margin:20px;">
             <button id="deleteAllBtn" onclick="deleteAllFavorites()">
-                🗑️ Remove All Favorites
+                <i class="fa-regular fa-trash-can"></i> Remove All Favorites
             </button>
         </div>
         <div class="movie-grid">
@@ -58,16 +59,32 @@ router.get("/", async (req, res) => {
 
     html += `
     </div>
+
+    <div class="modal-overlay" id="deleteAllModal">
+        <div class="modal-box">
+            <div class="modal-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            <p class="modal-title">Remove All Favorites?</p>
+            <p class="modal-text">This will remove every movie and show from your favorites list. This cannot be undone.</p>
+            <div class="modal-actions">
+                <button class="modal-btn modal-btn-cancel" onclick="document.getElementById('deleteAllModal').classList.remove('active')">Cancel</button>
+                <button class="modal-btn modal-btn-confirm" id="confirmDeleteAllBtn">Remove All</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-      async function deleteAllFavorites() {
-          const confirmDelete =
-              confirm("Are you sure you want to remove all favorites?");
-          if (!confirmDelete) return;
-          await fetch("/favorites/deleteAll", {
-              method: "POST"
-          });
-          location.reload();
+      function deleteAllFavorites() {
+          document.getElementById('deleteAllModal').classList.add('active');
       }
+      document.getElementById('confirmDeleteAllBtn').addEventListener('click', async function() {
+          this.textContent = 'Removing...';
+          this.disabled = true;
+          await fetch("/favorites/deleteAll", { method: "POST" });
+          location.reload();
+      });
+      document.getElementById('deleteAllModal').addEventListener('click', function(e) {
+          if (e.target === this) this.classList.remove('active');
+      });
     </script>
   </body>
   </html>`;

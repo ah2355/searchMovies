@@ -634,6 +634,7 @@ router.get("/:type/:id", async (req, res) => {
                             box-sizing: border-box;
                         }
                     </style>
+                    <script src="/misc/showModal.js"></script>
                 </head>
                 <body>
                     <nav class="navbar">
@@ -766,8 +767,7 @@ router.get("/:type/:id", async (req, res) => {
                     async function addFavorite(btn, title, year, imdbId, genres, rating, image, certification) {
                         const isGuest = ${isGuest};
                         if (isGuest) {
-                            alert("Please log in to add favorites!");
-                            window.location.href = "/users/login";
+                            showLoginModal();
                             return;
                         }
                         const isActive = btn.classList.toggle('active');
@@ -782,8 +782,7 @@ router.get("/:type/:id", async (req, res) => {
                     async function addWatchlist(btn, title, year, imdbId, genres, rating, image, certification) {
                         const isGuest = ${isGuest};
                         if (isGuest) {
-                            alert("Please log in to use watchlist!");
-                            window.location.href = "/users/login";
+                            showLoginModal();
                             return;
                         }
                         btn.classList.toggle('active');
