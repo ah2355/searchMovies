@@ -159,7 +159,8 @@ router.get("/results", async (req, res) => {
                 const dateString = movie.media_type === "movie" ? (movie.release_date || "") : (movie.first_air_date || "");
                 const releaseYear = dateString ? dateString.substring(0, 4) : "N/A";
                 const rating = (movie.vote_average && !isNaN(movie.vote_average)) ? Number(movie.vote_average).toFixed(1) : "N/A";
-                const posterPath = movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : 'images/icon.png';
+                const posterPath = movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : null;
+                const posterIcon = movie.media_type === 'tv' ? 'fa-tv' : 'fa-film';
 
                 let genreText = "Unknown";
                 if (movie.genre_ids && movie.genre_ids.length > 0) {
@@ -188,7 +189,9 @@ router.get("/results", async (req, res) => {
                     <div class="movie-card" onclick="window.location.href='/media/${mtype}/${movie.id}${nsfwFlag}'">
                         <div class="poster-container">
                         <span class="cert-badge ${certClass}">${ageCertificate}</span>
-                        <img src="${posterPath}" alt="movie poster">
+                        ${posterPath
+                            ? `<img src="${posterPath}" alt="movie poster">`
+                            : `<div class="no-poster"><i class="fa-solid ${posterIcon}"></i></div>`}
                     </div>
 
                     <h3>${movieTitle}</h3>
@@ -391,7 +394,8 @@ router.get("/discover", async(req, res) => {
                 for (const movie of movies) {
                     const movieTitle = movie.title || movie.name || "Unknown";
                     const releaseYear = (movie.release_date || movie.first_air_date || "").substring(0, 4) || "N/A";
-                    const posterPath = movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : 'images/icon.png';
+                    const posterPath = movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : null;
+                    const posterIcon = (movie.media_type === 'tv' || normalizedType === 'tv') ? 'fa-tv' : 'fa-film';
                     const rating = (movie.vote_average && !isNaN(movie.vote_average)) ? Number(movie.vote_average).toFixed(1) : "N/A";
                     const genreText = movie.genre_ids ? movie.genre_ids.map(id => genreMap[id]).filter(Boolean).join(", ") : "Unknown";
                     let ageCertificate = "PG-13"; // Default
@@ -418,9 +422,11 @@ router.get("/discover", async(req, res) => {
                     const certClass = ageCertificate.replace(/[^a-zA-Z0-9]/g, '-');
                     html += `
                     <div class="movie-card" onclick="window.location.href='/media/${movie.media_type || normalizedType}/${movie.id}'">
-                        <div class="poster-container"> 
+                        <div class="poster-container">
                             <span class="cert-badge ${certClass}">${ageCertificate}</span>
-                            <img src="${posterPath}" alt="movie poster">
+                            ${posterPath
+                                ? `<img src="${posterPath}" alt="movie poster">`
+                                : `<div class="no-poster"><i class="fa-solid ${posterIcon}"></i></div>`}
                         </div>
                         
                         <h3>${movieTitle}</h3>

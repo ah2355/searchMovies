@@ -413,15 +413,16 @@ h2 {
     z-index: 1001;
   }
 
-  .nav-right { 
-    display: none; 
-    flex-direction: column; 
-    position: absolute; 
-    top: 60px; 
-    left: 0; 
-    width: 100%; 
-    background: #1a1a1a; 
-    padding: 20px; 
+  .nav-right {
+    display: none;
+    flex-direction: column;
+    position: absolute;
+    top: 60px;
+    left: 0;
+    width: 100%;
+    box-sizing: border-box;
+    background: #1a1a1a;
+    padding: 20px;
     z-index: 1000;
   }
   
