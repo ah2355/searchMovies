@@ -20,89 +20,6 @@ router.get("/login", (req,res) => {
                 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
                 <link rel="icon" type="image/x-icon" href="/images/icon.png">
                 <title>My Account - SearchMovie</title>
-                <style>
-                    .profile-avatar {
-                        width: 100px;
-                        height: 100px;
-                        border-radius: 50%;
-                        background: linear-gradient(135deg, #7a65ba, #fc466b);
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        font-size: 42px;
-                        font-weight: 700;
-                        color: white;
-                        margin: 0 auto 15px;
-                        box-shadow: 0 8px 30px rgba(252, 70, 107, 0.3);
-                    }
-                    .profile-username {
-                        font-size: 24px;
-                        font-weight: 700;
-                        color: white;
-                        margin-bottom: 6px;
-                    }
-                    .profile-label {
-                        color: rgba(255,255,255,0.5);
-                        font-size: 14px;
-                        margin-bottom: 30px;
-                    }
-                    .profile-actions {
-                        display: flex;
-                        flex-direction: column;
-                        gap: 12px;
-                        align-items: center;
-                    }
-                    .profile-btn {
-                        width: 100%;
-                        max-width: 280px;
-                        padding: 13px;
-                        border-radius: 12px;
-                        font-size: 15px;
-                        font-weight: 600;
-                        cursor: pointer;
-                        transition: all 0.2s ease;
-                        text-decoration: none;
-                        text-align: center;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        gap: 8px;
-                    }
-                    .profile-btn-primary {
-                        background: linear-gradient(135deg, #7a65ba, #a61930, #fc466b);
-                        color: white;
-                        border: none;
-                    }
-                    .profile-btn-primary:hover {
-                        filter: brightness(1.15);
-                        transform: translateY(-2px);
-                    }
-                    .profile-btn-outline {
-                        background: rgba(255,255,255,0.06);
-                        color: white;
-                        border: 1px solid rgba(255,255,255,0.15);
-                    }
-                    .profile-btn-outline:hover {
-                        background: rgba(255,255,255,0.12);
-                        transform: translateY(-2px);
-                    }
-                    .profile-btn-danger {
-                        background: transparent;
-                        color: #e50914;
-                        border: 1px solid #e50914;
-                    }
-                    .profile-btn-danger:hover {
-                        background: #e50914;
-                        color: white;
-                    }
-                    .profile-divider {
-                        width: 100%;
-                        max-width: 280px;
-                        border: none;
-                        border-top: 1px solid rgba(255,255,255,0.1);
-                        margin: 10px auto;
-                    }
-                </style>
             </head>
             <body class="loginBody">
                 <nav class="navbar">
@@ -138,13 +55,36 @@ router.get("/login", (req,res) => {
 
                             <hr class="profile-divider">
 
-                            <button class="profile-btn profile-btn-danger"
-                                onclick="if(confirm('Are you sure? This will permanently delete your account, favorites, watchlist, and watch progress. This cannot be undone.')) { fetch('/users/delete-account', { method: 'POST' }).then(() => window.location.href = '/users/login'); }">
+                            <button class="profile-btn profile-btn-danger" onclick="document.getElementById('deleteModal').classList.add('active')">
                                 <i class="fa-solid fa-trash"></i> Delete Account
                             </button>
                         </div>
                     </div>
                 </div>
+
+                <div class="modal-overlay" id="deleteModal">
+                    <div class="modal-box">
+                        <div class="modal-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                        <p class="modal-title">Delete Account?</p>
+                        <p class="modal-text">This will permanently delete your account, favorites, watchlist, and watch progress. This cannot be undone.</p>
+                        <div class="modal-actions">
+                            <button class="modal-btn modal-btn-cancel" onclick="document.getElementById('deleteModal').classList.remove('active')">Cancel</button>
+                            <button class="modal-btn modal-btn-confirm" id="confirmDeleteBtn">Delete</button>
+                        </div>
+                    </div>
+                </div>
+
+                <script>
+                    document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+                        this.textContent = 'Deleting...';
+                        this.disabled = true;
+                        fetch('/users/delete-account', { method: 'POST' })
+                            .then(() => window.location.href = '/users/login');
+                    });
+                    document.getElementById('deleteModal').addEventListener('click', function(e) {
+                        if (e.target === this) this.classList.remove('active');
+                    });
+                </script>
             </body>
         </html>
         `);
