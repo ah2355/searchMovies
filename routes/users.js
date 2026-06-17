@@ -1,37 +1,149 @@
 const express = require("express");
 const router = express.Router();
 const User = require("../models/User");
+const Favorite = require("../models/Favorite");
+const Watchlist = require("../models/Watchlist");
+const WatchProgress = require("../models/WatchProgress");
 
 router.get("/login", (req,res) => {
     if (req.session && req.session.userId) {
+        const username = req.session.username || 'User';
+        const initial = username.charAt(0).toUpperCase();
         return res.send(`
         <!DOCTYPE html>
         <html>
             <head>
                 <meta charset="utf-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <link rel="stylesheet" href="/css/style.css">
+                <link rel="stylesheet" href="/css/login.css">
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+                <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
                 <link rel="icon" type="image/x-icon" href="/images/icon.png">
-                <title>Already Logged In</title>
+                <title>My Account - SearchMovie</title>
+                <style>
+                    .profile-avatar {
+                        width: 100px;
+                        height: 100px;
+                        border-radius: 50%;
+                        background: linear-gradient(135deg, #7a65ba, #fc466b);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 42px;
+                        font-weight: 700;
+                        color: white;
+                        margin: 0 auto 15px;
+                        box-shadow: 0 8px 30px rgba(252, 70, 107, 0.3);
+                    }
+                    .profile-username {
+                        font-size: 24px;
+                        font-weight: 700;
+                        color: white;
+                        margin-bottom: 6px;
+                    }
+                    .profile-label {
+                        color: rgba(255,255,255,0.5);
+                        font-size: 14px;
+                        margin-bottom: 30px;
+                    }
+                    .profile-actions {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 12px;
+                        align-items: center;
+                    }
+                    .profile-btn {
+                        width: 100%;
+                        max-width: 280px;
+                        padding: 13px;
+                        border-radius: 12px;
+                        font-size: 15px;
+                        font-weight: 600;
+                        cursor: pointer;
+                        transition: all 0.2s ease;
+                        text-decoration: none;
+                        text-align: center;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 8px;
+                    }
+                    .profile-btn-primary {
+                        background: linear-gradient(135deg, #7a65ba, #a61930, #fc466b);
+                        color: white;
+                        border: none;
+                    }
+                    .profile-btn-primary:hover {
+                        filter: brightness(1.15);
+                        transform: translateY(-2px);
+                    }
+                    .profile-btn-outline {
+                        background: rgba(255,255,255,0.06);
+                        color: white;
+                        border: 1px solid rgba(255,255,255,0.15);
+                    }
+                    .profile-btn-outline:hover {
+                        background: rgba(255,255,255,0.12);
+                        transform: translateY(-2px);
+                    }
+                    .profile-btn-danger {
+                        background: transparent;
+                        color: #e50914;
+                        border: 1px solid #e50914;
+                    }
+                    .profile-btn-danger:hover {
+                        background: #e50914;
+                        color: white;
+                    }
+                    .profile-divider {
+                        width: 100%;
+                        max-width: 280px;
+                        border: none;
+                        border-top: 1px solid rgba(255,255,255,0.1);
+                        margin: 10px auto;
+                    }
+                </style>
             </head>
-            <body>
-                <nav class="navbar2">
-                    <span class="nav-title2">Account Control</span>
-                    <div class="nav-item2">
-                        <a id="elemNav" href="/">Home</a>
-                        <a href="/favorites">Favorites</a>
+            <body class="loginBody">
+                <nav class="navbar">
+                    <div class="nav-left">
+                        <img src="/images/icon.png" alt="Logo" class="logoImg2">
+                        <a href="/" id="titleLink">
+                            <span class="nav-title">SearchMovie</span>
+                        </a>
                     </div>
                 </nav>
 
-                <div style="text-align: center; margin-top: 100px;">
-                    <h2 style="color: white; font-size: 2rem;">You are already logged in!</h2>
-                    <p style="color: rgba(255,255,255,0.7); margin-bottom: 30px;">No need to log in again. You can head back home or terminate your session below.</p>
-                    
-                    <form action="/users/logout" method="POST" style="display: inline-block;">
-                        <button type="submit" id="deleteBtn" style="padding: 12px 24px; font-size: 16px; cursor: pointer;">
-                            Sign Out
-                        </button>
-                    </form>
+                <div class="auth-wrapper">
+                    <div id="loginContainer" style="text-align:center;">
+                        <div class="profile-avatar">${initial}</div>
+                        <p class="profile-username">${username}</p>
+                        <p class="profile-label">SearchMovie Account</p>
+
+                        <div class="profile-actions">
+                            <a href="/" class="profile-btn profile-btn-primary">
+                                <i class="fa-solid fa-house"></i> Home
+                            </a>
+                            <a href="/favorites" class="profile-btn profile-btn-outline">
+                                <i class="fa-solid fa-heart"></i> My Favorites
+                            </a>
+                            <a href="/my-watchlist" class="profile-btn profile-btn-outline">
+                                <i class="fa-solid fa-bookmark"></i> My Watchlist
+                            </a>
+                            <form action="/users/logout" method="POST" style="width:100%; max-width:280px; margin:0;">
+                                <button type="submit" class="profile-btn profile-btn-outline" style="width:100%;">
+                                    <i class="fa-solid fa-right-from-bracket"></i> Sign Out
+                                </button>
+                            </form>
+
+                            <hr class="profile-divider">
+
+                            <button class="profile-btn profile-btn-danger"
+                                onclick="if(confirm('Are you sure? This will permanently delete your account, favorites, watchlist, and watch progress. This cannot be undone.')) { fetch('/users/delete-account', { method: 'POST' }).then(() => window.location.href = '/users/login'); }">
+                                <i class="fa-solid fa-trash"></i> Delete Account
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </body>
         </html>
@@ -292,6 +404,28 @@ router.post("/logout", (req, res) => {
     }
 });
 
+router.post("/delete-account", async (req, res) => {
+    if (!req.session || !req.session.userId) {
+        return res.status(401).json({ error: "Not logged in" });
+    }
+    const userId = req.session.userId;
+    try {
+        await Promise.all([
+            User.findByIdAndDelete(userId),
+            Favorite.deleteMany({ user: userId }),
+            Watchlist.deleteMany({ user: userId }),
+            WatchProgress.deleteMany({ user: userId })
+        ]);
+        req.session.destroy(() => {
+            res.clearCookie('connect.sid');
+            res.json({ success: true });
+        });
+    } catch (err) {
+        console.log("Error deleting account:", err);
+        res.status(500).json({ error: "Failed to delete account" });
+    }
+});
+
 router.get("/privacy", (req, res) => {
     res.send(`
     <!DOCTYPE html>
@@ -344,7 +478,7 @@ router.get("/privacy", (req, res) => {
                     <p style="color:#ccc; line-height:1.7;">We use a session cookie to keep you logged in. No tracking or advertising cookies are used.</p>
 
                     <h3 style="margin-top:20px;">6. Data Deletion</h3>
-                    <p style="color:#ccc; line-height:1.7;">You may request deletion of your account and all associated data by contacting us at wolfro979@gmail.com</p>
+                    <p style="color:#ccc; line-height:1.7;">You can delete your account and all associated data at any time from the account page. Once deleted, your username, favorites, watchlist, and watch progress are permanently removed and cannot be recovered.</p>
 
                     <h3 style="margin-top:20px;">7. Contact</h3>
                     <p style="color:#ccc; line-height:1.7;">If you have questions about this privacy policy, contact us at afifiram@gmail.com.</p>

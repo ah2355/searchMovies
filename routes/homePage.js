@@ -19,11 +19,9 @@ router.get('/', async (req,res) => {
         : username;
     displayName = displayName.charAt(0).toUpperCase() + displayName.substring(1);
     
-    const authAction = isGuest 
+    const authAction = isGuest
         ? `<a href="/users/login" class="nav-item" id="login-link">Log In</a>`
-        : `<form action="/users/logout" method="post" style="display: inline;">
-             <button type="submit" id="logout-link-btn">Sign Out</button>
-           </form>`;
+        : `<a href="/users/login" class="nav-item"><i class="fa-solid fa-user"></i> Account</a>`;
     
     const api_key = process.env.TMDB_API_KEY;
     const page = Number(req.query.page) || 1;
