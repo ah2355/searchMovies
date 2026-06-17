@@ -375,6 +375,7 @@ router.get("/privacy", (req, res) => {
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <link rel="stylesheet" href="/css/login.css">
             <link rel="icon" type="image/x-icon" href="/images/icon.png">
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
             <title>Privacy Policy - SearchMovie</title>
         </head>
         <body class="loginBody">
@@ -385,6 +386,12 @@ router.get("/privacy", (req, res) => {
                         <span class="nav-title">SearchMovie</span>
                     </a>
                 </div>
+                <div class="nav-right">
+                    <button onclick="window.history.back()" class="nav-item" style="background:none; border:none; cursor:pointer;">
+                        <i class="fa-solid fa-left-long"></i> Back
+                    </button>
+                </div>
+
             </nav>
 
             <div class="auth-wrapper" style="align-items:flex-start; margin-top:20px;">
