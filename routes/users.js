@@ -128,11 +128,11 @@ router.get("/login", (req,res) => {
                     </button>
 
                     <div class="nav-right" id="navLinks">
-                        <a href="/" class="nav-item">Home Page</a>
-                        <a href="#feature-heading" class="nav-item">Features</a>
-                        <a href="#tools-heading" class="nav-item">Tools Used</a>
-                        <a href= "https://github.com/ah2355" target="_blank" class="nav-item">About Dev</a>
-                        <a href="/users/privacy" class="nav-item"><i class="fa-solid fa-circle-info"></i></a>
+                        <a href="/" class="nav-item"><i class="fa-solid fa-house"></i> Home</a>
+                        <a href="#feature-heading" class="nav-item"><i class="fa-solid fa-wand-magic-sparkles"></i> Features</a>
+                        <a href="#tools-heading" class="nav-item"><i class="fa-solid fa-screwdriver-wrench"></i> Tools Used</a>
+                        <a href= "https://github.com/ah2355" target="_blank" class="nav-item"><i class="fa-brands fa-dev"></i> About Dev</a>
+                        <a href="/users/privacy" class="nav-item"><i class="fa-solid fa-circle-info"></i> Privacy Notice</a>
 
                     </div>
                 </nav>
