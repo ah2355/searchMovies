@@ -582,16 +582,13 @@ router.get("/:type/:id", async (req, res) => {
 
         const certClass = ageCertificate.replace(/[^a-zA-Z0-9]/g, '-');
 
-        // Final display values: prefer AniList season data when present, else TMDB.
         const displayTitle = aniDisplayTitle || title;
         const displayEscapedTitle = displayTitle.replace(/'/g, "\\'");
         const displayYear = aniDisplayYear || year;
         const displayPoster = aniDisplayCover || posterPath;
         const displayOverview = aniDisplayOverview || overview;
 
-        // "Other Seasons" navigation strip from AniList relations. Each related entry shares
-        // "Seasons" navigation from the full AniList chain. Each entry shares this TMDB show id,
-        // so we link back to /media/tv/{id} with that season's aniId. Hidden when only one season.
+       
         const nsfwQS = (req.query.nsfw === 'true' || req.session.nsfw) ? '&nsfw=true' : '';
         const relatedSeasonsHtml = (isAnime && relatedSeasons.length > 1) ? `
             <h3 class="overview-heading">Seasons</h3>
@@ -1131,7 +1128,8 @@ router.get("/:type/:id", async (req, res) => {
 
                         const thumbCount = animeEpisodes.filter(e => e && e.thumbnail).length;
                         const hasAniThumbs = count > 0 && (thumbCount / count) >= 0.6;
-                        const hasTmdbStills = tmdbEpisodeStills.length > 0 && tmdbEpisodeStills.some(s => s && s.still);
+                        const tmdbStillCount = tmdbEpisodeStills.filter(s => s && s.still).length;
+                        const hasTmdbStills = count > 0 && (tmdbStillCount / count) >= 0.6;
                         const hasGridThumbs = hasTmdbStills || hasAniThumbs;
                         console.log('ANIME EP RENDER:', { count, thumbCount, ratio: (thumbCount/count).toFixed(2), mode: hasGridThumbs ? 'GRID' : 'CHIP', hasTmdbStills, animeEpisodesLen: animeEpisodes.length, anilistEpisodeCount });
 
