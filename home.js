@@ -39,7 +39,18 @@ app.use('/', require('./routes/search'));
 app.use('/', require('./routes/airing'));
 app.use('/', require('./routes/anime'));
 app.use('/', require('./routes/watchProgress'));
-app.get('/health', (req, res) => res.send('ok'));
+app.get('/health', async (req, res) => {
+    const checks = { server: true, database: false, tmdb: false };
+    try {
+        checks.database = mongoose.connection.readyState === 1;
+    } catch {}
+    try {
+        const r = await fetch(`https://api.themoviedb.org/3/configuration?api_key=${process.env.TMDB_API_KEY}`);
+        checks.tmdb = r.ok;
+    } catch {}
+    const healthy = checks.server && checks.database && checks.tmdb;
+    res.status(healthy ? 200 : 503).json(checks);
+});
 
 app.use('/', requireAuth, require('./routes/myWatchlist'));
 
