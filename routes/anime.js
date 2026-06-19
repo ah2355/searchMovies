@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { fetchFavoritesFromDB, fetchWatchlistFromDB } = require('../misc/db');
+const { anilistQuery } = require('../misc/anilist');
 
 router.get("/anime", async (req, res) => {
     const isGuest = !(req.session && req.session.userId);
@@ -27,7 +28,7 @@ router.get("/anime", async (req, res) => {
 
     const safeGenre = genres.includes(genre) ? genre : '';
 
-    const anilistQuery = `
+    const animeQuery = `
         query ($page: Int, $sort: [MediaSort])  {
             Page(page: $page, perPage: ${perPage}) {
                 pageInfo { total currentPage lastPage hasNextPage }
@@ -56,20 +57,11 @@ router.get("/anime", async (req, res) => {
         }
     `;
 
-    const [aniRes, favorites, watchlist] = await Promise.all([
-        fetch('https://graphql.anilist.co', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                query: anilistQuery,
-                variables: { page, sort: [sortMap[filter] || 'POPULARITY_DESC'] }
-            })
-        }),
+    const [aniData, favorites, watchlist] = await Promise.all([
+        anilistQuery(animeQuery, { page, sort: [sortMap[filter] || 'POPULARITY_DESC'] }),
         fetchFavoritesFromDB(req.session.userId),
         fetchWatchlistFromDB(req.session.userId)
     ]);
-
-    const aniData = await aniRes.json();
     if (aniData.errors) console.log('AniList errors:', JSON.stringify(aniData.errors));
 
     let items = aniData.data?.Page?.media || [];
@@ -109,7 +101,7 @@ router.get("/anime", async (req, res) => {
                 <div class="nav-links2">
                     <a href="/" class="nav-item">Home</a>
                     <a href="/favorites" class="nav-item">Favorites</a>
-                    <a href="/toggle-nsfw" class="nav-item nsfw-btn" style="border:1px solid ${req.session.nsfw ? '#e50914' : '#555'};">
+                    <a href="/toggle-nsfw" class="nav-item nsfw-btn" style="border:1px solid ${req.session.nsfw ? '#e50914' : '#555'}; border-radius: 15px"> 
                         🔞 NSFW ${req.session.nsfw ? 'ON' : 'OFF'}
                     </a>
                 </div>

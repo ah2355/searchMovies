@@ -3,6 +3,7 @@ const axios = require("axios");
 const cheerio = require("cheerio");
 const puppeteer = require('puppeteer');
 const router = express.Router();
+const { anilistQuery } = require('../misc/anilist');
 const { fetchFavoritesFromDB, fetchWatchlistFromDB } = require("../misc/db.js");
 
 const genreMap = require('../misc/genreMap');
@@ -92,12 +93,7 @@ async function buildSeasonChain(startId) {
     }`;
     async function fetchNode(id) {
         try {
-            const r = await fetch('https://graphql.anilist.co', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ query: Q, variables: { id } })
-            });
-            const d = await r.json();
+            const d = await anilistQuery(Q, { id });
             return d.data?.Media || null;
         } catch { return null; }
     }
@@ -399,48 +395,24 @@ router.get("/:type/:id", async (req, res) => {
 
                 // Exact entry the user clicked on /anime
                 if (aniIdParam) {
-                    const r = await fetch('https://graphql.anilist.co', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            query: `query ($id: Int) { Media(id: $id, type: ANIME) { ${EP_FIELDS} } }`,
-                            variables: { id: aniIdParam }
-                        })
-                    });
-                    const j = await r.json();
+                    const j = await anilistQuery(`query ($id: Int) { Media(id: $id, type: ANIME) { ${EP_FIELDS} } }`, { id: aniIdParam });
                     media = j.data?.Media || null;
                 }
 
-                // Title + season-year search (disambiguates remakes by year)
                 if (!media) {
                     const tmdbYear = (data.first_air_date || "").substring(0, 4);
-                    const query = `
+                    const malData = await anilistQuery(`
                         query ($search: String, $year: Int) {
                             Page(perPage: 1) {
                                 media(search: $search, type: ANIME, seasonYear: $year) { ${EP_FIELDS} }
                             }
                         }
-                    `;
-                    const malRes = await fetch('https://graphql.anilist.co', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ query, variables: { search: title, year: tmdbYear ? Number(tmdbYear) : null } })
-                    });
-                    const malData = await malRes.json();
+                    `, { search: title, year: tmdbYear ? Number(tmdbYear) : null });
                     media = malData.data?.Page?.media?.[0] || null;
                 }
 
-                // Unfiltered title search (seasonYear is strict and can miss by a year)
                 if (!media) {
-                    const fb = await fetch('https://graphql.anilist.co', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            query: `query ($search: String) { Media(search: $search, type: ANIME) { ${EP_FIELDS} } }`,
-                            variables: { search: title }
-                        })
-                    });
-                    const fbData = await fb.json();
+                    const fbData = await anilistQuery(`query ($search: String) { Media(search: $search, type: ANIME) { ${EP_FIELDS} } }`, { search: title });
                     media = fbData.data?.Media || null;
                 }
 

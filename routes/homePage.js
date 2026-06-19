@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { fetchFavoritesFromDB, fetchWatchlistFromDB } = require('../misc/db');
+const { anilistQuery } = require('../misc/anilist');
 
 let animeCacheData = null;
 let animeCacheTime = 0;
@@ -50,12 +51,7 @@ router.get('/', async (req,res) => {
                 }
             }
         `;
-        const tr = await fetch('https://graphql.anilist.co', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ query: trendingQuery })
-        });
-        const td = await tr.json();
+        const td = await anilistQuery(trendingQuery);
         const fetched = td.data?.Page?.media || [];
         if (fetched.length) {
             trendingAnime = fetched;
@@ -95,12 +91,7 @@ router.get('/', async (req,res) => {
             }).join('\n')}
         }`;
         try {
-            const r = await fetch('https://graphql.anilist.co', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ query: batchQuery })
-            });
-            const d = await r.json();
+            const d = await anilistQuery(batchQuery);
             animeResults = animeResults.filter((a, i) => {
                 const ani = d.data?.[`a${i}`];
                 if (ani?.isAdult) return false;
@@ -131,12 +122,7 @@ router.get('/', async (req,res) => {
                 }
             }
         `;
-        const ar = await fetch('https://graphql.anilist.co', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ query: airingQuery })
-        });
-        const ad = await ar.json();
+        const ad = await anilistQuery(airingQuery);
         const fetched = ad.data?.Page?.media || [];
         if (fetched.length) {
             airingAnime = fetched;
