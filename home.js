@@ -39,9 +39,9 @@ app.use('/', require('./routes/search'));
 app.use('/', require('./routes/airing'));
 app.use('/', require('./routes/anime'));
 app.use('/', require('./routes/watchProgress'));
-app.use('/', requireAuth, require('./routes/myWatchlist'));
-
 app.get('/health', (req, res) => res.send('ok'));
+
+app.use('/', requireAuth, require('./routes/myWatchlist'));
 
 app.listen(port, err => {
     if (err) console.log('Server failed:', err);
