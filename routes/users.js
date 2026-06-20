@@ -8,6 +8,10 @@ const WatchProgress = require("../models/WatchProgress");
 router.get("/login", (req,res) => {
     if (req.session && req.session.userId) {
         const username = req.session.username || 'User';
+        let displayName = (username !== "Guest" && username.includes('@')) 
+        ? username.split('@')[0] 
+        : username;
+        displayName = displayName.charAt(0).toUpperCase() + displayName.substring(1);
         const initial = username.charAt(0).toUpperCase();
         return res.send(`
         <!DOCTYPE html>
@@ -34,7 +38,7 @@ router.get("/login", (req,res) => {
                 <div class="auth-wrapper">
                     <div id="loginContainer" style="text-align:center;">
                         <div class="profile-avatar">${initial}</div>
-                        <p class="profile-username">${username}</p>
+                        <p class="profile-username">${displayName}</p>
                         <p class="profile-label">SearchMovie Account</p>
 
                         <div class="profile-actions">

@@ -86,7 +86,7 @@ async function buildSeasonChain(startId) {
         Media(id: $id, type: ANIME) {
             id format type
             title { romaji english }
-            coverImage { medium }
+            coverImage { large }
             startDate { year }
             relations { edges { relationType node { id type format } } }
         }
@@ -97,46 +97,57 @@ async function buildSeasonChain(startId) {
             return d.data?.Media || null;
         } catch { return null; }
     }
-    const isTv = n => n && n.type === 'ANIME' && ['TV', 'TV_SHORT'].includes(n.format);
-    const edgeId = (node, rel) =>
-        (node?.relations?.edges || []).find(e =>
-            e.relationType === rel && isTv(e.node) && e.node?.id)?.node?.id || null;
+    const isTv = n => n && n.type === 'ANIME' && ['TV', 'TV_SHORT', 'ONA'].includes(n.format);
+    const allEdgeIds = (node, rel) =>
+        (node?.relations?.edges || [])
+            .filter(e => e.relationType === rel && e.node?.id && e.node?.type === 'ANIME')
+            .map(e => e.node.id);
+
+    // Follow a relation direction, skipping non-TV entries (OVAs, specials) to find the next TV season
+    async function followRelation(node, rel, seen) {
+        const candidates = allEdgeIds(node, rel);
+        for (const cid of candidates) {
+            if (seen.has(cid)) continue;
+            seen.add(cid);
+            const n = await fetchNode(cid);
+            if (!n) continue;
+            if (isTv(n)) return n;
+            // Not TV — skip through it (e.g. OVA between two TV seasons)
+            const deeper = await followRelation(n, rel, seen);
+            if (deeper) return deeper;
+        }
+        return null;
+    }
 
     const start = await fetchNode(startId);
     if (!start) return [];
 
-    // Walk backward along PREQUEL to the first season, collecting ids.
     const back = [];
     let seen = new Set([startId]);
     let cur = start;
     for (let i = 0; i < 12; i++) {
-        const prevId = edgeId(cur, 'PREQUEL');
-        if (!prevId || seen.has(prevId)) break;
-        seen.add(prevId);
-        const node = await fetchNode(prevId);
+        const node = await followRelation(cur, 'PREQUEL', seen);
         if (!node) break;
         back.unshift(node);
         cur = node;
     }
-    // Walk forward along SEQUEL to the last season.
     const fwd = [];
     cur = start;
     for (let i = 0; i < 12; i++) {
-        const nextId = edgeId(cur, 'SEQUEL');
-        if (!nextId || seen.has(nextId)) break;
-        seen.add(nextId);
-        const node = await fetchNode(nextId);
+        const node = await followRelation(cur, 'SEQUEL', seen);
         if (!node) break;
         fwd.push(node);
         cur = node;
     }
     const ordered = [...back, start, ...fwd];
+    const formatLabel = f => ({ TV: 'TV', TV_SHORT: 'TV Short', ONA: 'ONA', OVA: 'OVA' }[f] || f);
     return ordered.map((n, idx) => ({
         id: n.id,
         seasonLabel: 'Season ' + (idx + 1),
         title: n.title?.english || n.title?.romaji || ('Season ' + (idx + 1)),
-        cover: n.coverImage?.medium || '/images/icon.png',
+        cover: n.coverImage?.large || '/images/icon.png',
         year: n.startDate?.year || '',
+        format: formatLabel(n.format),
         current: n.id === startId
     }));
 }
@@ -390,7 +401,7 @@ router.get("/:type/:id", async (req, res) => {
         // We need: anilistId (drives the player), genres/isAdult (NSFW gate), episode count.
         if (isAnime) {
             try {
-                const EP_FIELDS = `id episodes genres isAdult nextAiringEpisode { episode } streamingEpisodes { title thumbnail } title { romaji english } coverImage { large } bannerImage description(asHtml: false) startDate { year month day } relations { edges { relationType node { id type format title { romaji english } coverImage { medium } startDate { year } } } }`;
+                const EP_FIELDS = `id episodes genres isAdult nextAiringEpisode { episode } streamingEpisodes { title thumbnail } title { romaji english } coverImage { large } bannerImage description(asHtml: false) startDate { year month day } relations { edges { relationType node { id type format title { romaji english } coverImage { large } startDate { year } } } }`;
                 let media = null;
 
                 // Exact entry the user clicked on /anime
@@ -566,15 +577,13 @@ router.get("/:type/:id", async (req, res) => {
             <h3 class="overview-heading">Seasons</h3>
             <div class="related-seasons">
                 ${relatedSeasons.map(rs => `
-                    <a href="/media/tv/${id}?aniId=${rs.id}${nsfwQS}"
-                       style="flex:0 0 auto; width:120px; text-decoration:none; color:white;
-                              ${rs.current ? 'outline:2px solid #e50914; outline-offset:2px; border-radius:8px;' : ''}">
-                        <img src="${rs.cover}" alt="${rs.title}" style="width:120px; height:170px; object-fit:cover; border-radius:8px; display:block;">
-                        <p style="font-size:11px; color:#e50914; margin:6px 0 2px; text-transform:uppercase; letter-spacing:0.5px;">
-                            ${rs.seasonLabel}${rs.current ? ' • Now' : ''}
-                        </p>
-                        <p style="font-size:13px; margin:0; line-height:1.3;">${rs.title}</p>
-                        ${rs.year ? `<p style="font-size:11px; color:#aaa; margin:2px 0 0;">${rs.year}</p>` : ''}
+                    <a href="/media/tv/${id}?aniId=${rs.id}${nsfwQS}" class="season-card ${rs.current ? 'season-current' : ''}">
+                        <img src="${rs.cover}" alt="${rs.title}" class="season-cover">
+                        <div class="season-info">
+                            <p class="season-label">${rs.seasonLabel}${rs.current ? ' • Now' : ''}</p>
+                            <p class="season-title">${rs.title}</p>
+                            <p class="season-meta">${rs.format}${rs.year ? ' • ' + rs.year : ''}</p>
+                        </div>
                     </a>`).join('')}
             </div>` : '';
         console.log("Final Genres Text:", genresText);
