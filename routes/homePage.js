@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { fetchFavoritesFromDB, fetchWatchlistFromDB } = require('../misc/db');
 const { anilistQuery } = require('../misc/anilist');
+const WatchProgress = require('../models/WatchProgress');
 
 let animeCacheData = null;
 let animeCacheTime = 0;
@@ -138,7 +139,25 @@ router.get('/', async (req,res) => {
         }
     }
     const firstBackdrop = moviesData.results?.find(m => m.backdrop_path)?.backdrop_path;
-        
+
+    let recTitle = '';
+    let recResults = [];
+    if (!isGuest) {
+        try {
+            const recentWatches = await WatchProgress.find({ user: req.session.userId })
+                .sort({ updatedAt: -1 }).limit(10);
+            if (recentWatches.length) {
+                const pick = recentWatches[Math.floor(Math.random() * recentWatches.length)];
+                recTitle = pick.title;
+                const recRes = await fetch(`https://api.themoviedb.org/3/${pick.mediaType}/${pick.mediaId}/recommendations?api_key=${api_key}&page=1`);
+                const recData = await recRes.json();
+                recResults = (recData.results || []).filter(r => r.poster_path).slice(0, 20);
+            }
+        } catch (err) {
+            console.log('Recommendations fetch failed:', err.message);
+        }
+    }
+
     let html = ` 
     <!DOCTYPE html>
         <html>
@@ -289,11 +308,51 @@ router.get('/', async (req,res) => {
                             </div>
                         </div>`;
 
-                        html += `<div id="popular-movie">
-                            <div id="movie-section" class="slider-container">
-                                <h2>| Trending Movies</h2>
-                                <button type="button" class="slide-btn left" onclick="scrollGrid('movie-grid', -300)">❮</button>
-                            <div id="movie-grid" class="popular-movie-grid"> `;
+    if (recResults.length > 0) {
+        html += `
+            <div id="popular-movie">
+                <div class="slider-container">
+                    <h2>| Because You Watched ${recTitle}</h2>
+                    <button type="button" class="slide-btn left" onclick="scrollGrid('rec-grid', -300)">❮</button>
+                    <div id="rec-grid" class="popular-movie-grid">`;
+
+        for (const rec of recResults) {
+            const recPoster = `https://image.tmdb.org/t/p/w500${rec.poster_path}`;
+            const recType = rec.media_type || (rec.title ? 'movie' : 'tv');
+            const recName = rec.title || rec.name || 'Unknown';
+            const recReleaseYear = (rec.release_date || rec.first_air_date || '').substring(0, 4) || 'N/A';
+            const rating = rec.vote_average ? Number(rec.vote_average).toFixed(1) : "N/A";
+            html += `
+                <div class="popular-movie-card" onclick="window.location.href='/media/${recType}/${rec.id}'">
+                    <div class="popular-poster-container">
+                        <img class="popular-movie-img" src="${recPoster}" alt="${recName}">
+                        <div class="play-overlay">
+                            <div class="play-icon"><i class="fa-solid fa-play"></i></div>
+                        </div>
+                    </div>
+                     <div class="movieInfo">
+                        <p class="movieTitleText">${recName}</p>
+                        <p class="movieReleaseYear">${recReleaseYear}</p>
+                         <div class="starrt-container">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="star">
+                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                <span class="star-rating">${rating}</span>
+                            </svg>
+                        </div>
+                     </div>
+                </div>`;
+        }
+        html += `
+                    <button type="button" class="slide-btn right" onclick="scrollGrid('rec-grid', 300)">❯</button>
+                </div>
+            </div>`;
+    }
+
+    html += `<div id="popular-movie">
+        <div id="movie-section" class="slider-container">
+            <h2>| Trending Movies</h2>
+            <button type="button" class="slide-btn left" onclick="scrollGrid('movie-grid', -300)">❮</button>
+        <div id="movie-grid" class="popular-movie-grid"> `;
 
     // Trending Movies Section
     for (const movie of moviesData.results || []) {
