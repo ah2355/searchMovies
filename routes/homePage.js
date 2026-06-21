@@ -144,12 +144,11 @@ router.get('/', async (req,res) => {
     let recResults = [];
     if (!isGuest) {
         try {
-            const recentWatches = await WatchProgress.find({ user: req.session.userId })
-                .sort({ updatedAt: -1 }).limit(10);
-            if (recentWatches.length) {
-                const pick = recentWatches[Math.floor(Math.random() * recentWatches.length)];
-                recTitle = pick.title;
-                const recRes = await fetch(`https://api.themoviedb.org/3/${pick.mediaType}/${pick.mediaId}/recommendations?api_key=${api_key}&page=1`);
+            const recentWatch = await WatchProgress.findOne({ user: req.session.userId })
+                .sort({ updatedAt: -1 });
+            if (recentWatch) {
+                recTitle = recentWatch.title;
+                const recRes = await fetch(`https://api.themoviedb.org/3/${recentWatch.mediaType}/${recentWatch.mediaId}/recommendations?api_key=${api_key}&page=1`);
                 const recData = await recRes.json();
                 recResults = (recData.results || []).filter(r => r.poster_path).slice(0, 20);
             }

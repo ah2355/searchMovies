@@ -907,6 +907,8 @@ router.get("/:type/:id", async (req, res) => {
                         if (source === 'vidsrcembed') return \`https://vidsrc-embed.ru/embed/movie/\${currentImdbId}\`;
                         if (source === 'videasy') return \`https://player.videasy.net/movie/\${currentShowId}\`;
                         if (source === 'multiembed') return \`https://multiembed.mov/?video_id=\${currentShowId}&tmdb=1\`;
+                        if (source === 'vidsrcxyz') return \`https://vidsrc.xyz/embed/movie?tmdb=\${currentShowId}\`;
+                        if (source === 'autoembed') return \`https://autoembed.co/movie/tmdb/\${currentShowId}\`;
                         return \`https://vidlink.pro/movie/\${currentShowId}\`;
                     }
 
@@ -915,6 +917,8 @@ router.get("/:type/:id", async (req, res) => {
                         if (source === 'vidsrcembed') return \`https://vidsrc-embed.ru/embed/tv/\${currentImdbId}/\${season}-\${episode}\`;
                         if (source === 'videasy') return \`https://player.videasy.net/tv/\${currentShowId}/\${season}/\${episode}\`;
                         if (source === 'multiembed') return \`https://multiembed.mov/?video_id=\${currentShowId}&tmdb=1&s=\${season}&e=\${episode}\`;
+                        if (source === 'vidsrcxyz') return \`https://vidsrc.xyz/embed/tv?tmdb=\${currentShowId}&season=\${season}&episode=\${episode}\`;
+                        if (source === 'autoembed') return \`https://autoembed.co/tv/tmdb/\${currentShowId}-\${season}-\${episode}\`;
                         return \`https://vidlink.pro/tv/\${currentShowId}/\${season}/\${episode}\`;
                     }
 
@@ -924,7 +928,11 @@ router.get("/:type/:id", async (req, res) => {
                             { id: 'videasy', label: 'Server 2' },
                             ...(currentImdbId ? [{ id: 'vidsrcembed', label: 'Server 3' }] : []),
                             { id: 'multiembed', label: 'Server 4' },
+                            { id: 'vidsrcxyz', label: 'Server 5' },
+                            { id: 'autoembed', label: 'Server 6' },
                         ];
+                        const currentIndex = sources.findIndex(s => s.id === currentSource);
+                        const nextSource = sources[(currentIndex + 1) % sources.length];
                         return \`
                             <div id="server-box">
                                 \${sources.map(s => \`
@@ -932,7 +940,18 @@ router.get("/:type/:id", async (req, res) => {
                                         style="background:\${currentSource === s.id ? '#e50914' : '#2a2a2a'};">
                                         <i class="fa-solid fa-server" style="margin-right:6px;"></i>\${s.label}
                                     </button>\`).join('')}
+                                <button class="serverBtn" onclick="tryNextServer()"
+                                    style="background:#1a6e2e; margin-left:12px;">
+                                    <i class="fa-solid fa-forward" style="margin-right:6px;"></i>Not working? Try next
+                                </button>
                             </div>\`;
+                    }
+
+                    function tryNextServer() {
+                        const sources = ['vidlink', 'videasy', ${imdbId ? "'vidsrcembed'," : ''} 'multiembed', 'vidsrcxyz', 'autoembed'];
+                        const currentIndex = sources.indexOf(currentSource);
+                        const next = sources[(currentIndex + 1) % sources.length];
+                        switchSource(next);
                     }
 
                     function switchSource(source) {
