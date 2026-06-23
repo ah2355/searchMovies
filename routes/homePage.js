@@ -283,6 +283,7 @@ router.get('/', async (req,res) => {
                                                     <option value="es">Spanish</option>
                                                     <option value="fr">French</option>
                                                     <option value="bn">Bangla</option>
+                                                    <option value="ko">Korean</option>
                                                 </select>
                                                 <br><br>
                                             </div>
