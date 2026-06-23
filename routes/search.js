@@ -219,9 +219,9 @@ router.get("/results", async (req, res) => {
         html += `
             </div>
             <div id="cntrl-btn">
-                ${page > 1 ? `<a href="/results?q=${encodeURIComponent(searchMovie)}&page=${page - 1}" id="showLess">Previous</a>` : ''}
+                ${page > 1 ? `<a href="/results?q=${encodeURIComponent(searchMovie)}&page=${page - 1}${searchLang ? '&language=' + encodeURIComponent(searchLang) : ''}" id="showLess">Previous</a>` : ''}
                 <span id="txtPage">Page ${page} of ${totalApprox ? '~' : ''}${totalPages}</span>
-                ${hasNext ? `<a href="/results?q=${encodeURIComponent(searchMovie)}&page=${page + 1}" id="showMore">Next</a>` : ''}
+                ${hasNext ? `<a href="/results?q=${encodeURIComponent(searchMovie)}&page=${page + 1}${searchLang ? '&language=' + encodeURIComponent(searchLang) : ''}" id="showMore">Next</a>` : ''}
             </div>
             <script>
                 const isGuest = ${isGuest};
@@ -452,9 +452,9 @@ router.get("/discover", async(req, res) => {
 
         html += `</div>
         <div id="cntrl-btn">
-            ${page > 1 ? `<button id="showLess" onclick="window.location.href='/discover?type=${typeSearch}&genres=${encodeURIComponent(req.query.genres || "")}&rating=${encodeURIComponent(ratingSearch)}&year=${encodeURIComponent(yearSearch)}&page=${page - 1}'">Prev Page</button>` : ''}
+            ${page > 1 ? `<button id="showLess" onclick="window.location.href='/discover?media=${typeSearch}&genres=${encodeURIComponent(req.query.genres || "")}&rating=${encodeURIComponent(ratingSearch)}&year=${encodeURIComponent(yearSearch)}&language=${encodeURIComponent(langFilter)}&page=${page - 1}'">Prev Page</button>` : ''}
             <span id="txtPage">Page ${page} of ${totalPages}</span>
-            ${page < totalPages ? `<button id="showMore" onclick="window.location.href='/discover?type=${typeSearch}&genres=${encodeURIComponent(req.query.genres || "")}&rating=${encodeURIComponent(ratingSearch)}&year=${encodeURIComponent(yearSearch)}&page=${page + 1}'">Next Page</button>` : ''}
+            ${page < totalPages ? `<button id="showMore" onclick="window.location.href='/discover?media=${typeSearch}&genres=${encodeURIComponent(req.query.genres || "")}&rating=${encodeURIComponent(ratingSearch)}&year=${encodeURIComponent(yearSearch)}&language=${encodeURIComponent(langFilter)}&page=${page + 1}'">Next Page</button>` : ''}
         </div>
         <script>
             const isGuest = ${isGuest};
