@@ -19,6 +19,7 @@ router.get("/", async (req, res) => {
         <link rel="stylesheet" href="/css/style.css">
         <link rel="icon" type="image/x-icon" href="images/icon.png">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+        <script src="/misc/tvNav.js" defer></script>
         <title>Favorite List</title>
       </head>
       <body>
@@ -40,7 +41,7 @@ router.get("/", async (req, res) => {
     favorites.forEach(movie => {
         const cert = movie.certification || "PG";
         html += `
-          <div class="movie-card" style="cursor: pointer;" onclick="window.location.href='/media/movie/${movie.imdbId}'">
+          <div class="movie-card" style="cursor: pointer;" tabindex="0" onclick="window.location.href='/media/movie/${movie.imdbId}'">
             <div class="poster-container">
               <span class="cert-badge ${cert.replace(/[^a-zA-Z0-9]/g, '-')}">${cert}</span>
               <img src="${movie.image || ''}" alt="movie poster">

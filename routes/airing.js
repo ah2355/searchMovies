@@ -43,6 +43,7 @@ router.get("/airing", async (req,res)=>{
             <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
             <script src="/misc/navMobile.js" defer></script>
+            <script src="/misc/tvNav.js" defer></script>
         </head>
         <body class="air-td-body">
             <nav class="navbar2">
@@ -154,7 +155,7 @@ router.get("/airing", async (req,res)=>{
             const href = tmdbId ? `/media/tv/${tmdbId}` : `/results?q=${encodeURIComponent(title)}`;
 
             html += `
-            <div class="air-card" onclick="window.location.href='${href}'">
+            <div class="air-card" tabindex="0" onclick="window.location.href='${href}'">
                 <img src="${image}" alt="${title}">
                 <div class="air-card-info">
                     <h3>${title}</h3>

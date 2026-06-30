@@ -195,6 +195,7 @@ router.get('/', async (req,res) => {
                     }
                 </script>
                 <script src="misc/genreFunc.js" defer></script>
+                <script src="/misc/tvNav.js" defer></script>
             </head>
             <body>
             <div class="app-container">
@@ -323,7 +324,7 @@ router.get('/', async (req,res) => {
             const recReleaseYear = (rec.release_date || rec.first_air_date || '').substring(0, 4) || 'N/A';
             const rating = rec.vote_average ? Number(rec.vote_average).toFixed(1) : "N/A";
             html += `
-                <div class="popular-movie-card" onclick="window.location.href='/media/${recType}/${rec.id}'">
+                <div class="popular-movie-card" tabindex="0" onclick="window.location.href='/media/${recType}/${rec.id}'">
                     <div class="popular-poster-container">
                         <img class="popular-movie-img" src="${recPoster}" alt="${recName}">
                         <div class="play-overlay">
@@ -365,7 +366,7 @@ router.get('/', async (req,res) => {
 
 
         html += `
-                <div class="popular-movie-card" onclick="window.location.href='/media/movie/${movie.id}'">
+                <div class="popular-movie-card" tabindex="0" onclick="window.location.href='/media/movie/${movie.id}'">
                     <div class="popular-poster-container"> 
                         <img class="popular-movie-img" src="${posterPath}" alt="${movieTitle} poster">
                         <div class="play-overlay">
@@ -408,7 +409,7 @@ router.get('/', async (req,res) => {
 
 
         html += `
-                <div class="popular-movie-card" onclick="window.location.href='/media/tv/${series.id}'">
+                <div class="popular-movie-card" tabindex="0" onclick="window.location.href='/media/tv/${series.id}'">
                     <div class="popular-poster-container"> 
                         <img class="popular-movie-img" src="${posterPath}" alt="${seriesTitle} poster">
                         <div class="play-overlay">
@@ -453,7 +454,7 @@ router.get('/', async (req,res) => {
 
 
         html += `
-                <div class="popular-movie-card" onclick="window.location.href='/media/${mediaTypeTD}/${trendingM.id}'">
+                <div class="popular-movie-card" tabindex="0" onclick="window.location.href='/media/${mediaTypeTD}/${trendingM.id}'">
                     <div class="popular-poster-container"> 
                         <img class="popular-movie-img" src="${posterPath}" alt="${seriesTitle} poster">
                         <div class="play-overlay">
@@ -500,7 +501,7 @@ router.get('/', async (req,res) => {
 
 
         html += `
-                <div class="popular-movie-card" onclick="window.location.href='/media/tv/${air.id}'">
+                <div class="popular-movie-card" tabindex="0" onclick="window.location.href='/media/tv/${air.id}'">
                     <div class="popular-poster-container"> 
                         <img class="popular-movie-img" src="${posterPath}" alt="${seriesTitle} poster">
                         <div class="play-overlay">
@@ -543,7 +544,7 @@ router.get('/', async (req,res) => {
         const href = `/anime-go?title=${encodeURIComponent(cleanTitle).replace(/'/g, '%27')}&aniId=${anime.id}`;
  
         html += `
-            <div class="popular-movie-card" onclick="window.location.href='${href}'">
+            <div class="popular-movie-card" tabindex="0" onclick="window.location.href='${href}'">
                 <div class="popular-poster-container">
                     <img class="popular-movie-img" src="${posterPath}" alt="${title} poster">
                     <div class="play-overlay"><div class="play-icon"><i class="fa-solid fa-play"></i></div></div>
@@ -587,7 +588,7 @@ router.get('/', async (req,res) => {
         const cleanTitle = searchTitle.replace(/season\s*\d+/i, '').replace(/[-–—:]/g, ' ').replace(/\s+/g, ' ').trim();
         const href = `/anime-go?title=${encodeURIComponent(cleanTitle).replace(/'/g, '%27')}&aniId=${anime.id}`;        
         html += `
-            <div class="popular-movie-card" onclick="window.location.href='${href}'">
+            <div class="popular-movie-card" tabindex="0" onclick="window.location.href='${href}'">
                 <div class="popular-poster-container">
                     <img class="popular-movie-img" src="${poster}" alt="${title} poster">
                     <div class="play-overlay"><div class="play-icon"><i class="fa-solid fa-play"></i></div></div>

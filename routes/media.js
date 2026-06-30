@@ -616,6 +616,7 @@ router.get("/:type/:id", async (req, res) => {
                         }
                     </style>
                     <script src="/misc/showModal.js"></script>
+                    <script src="/misc/tvNav.js" defer></script>
                 </head>
                 <body>
                     <nav class="navbar">
@@ -1006,7 +1007,7 @@ router.get("/:type/:id", async (req, res) => {
                             const rating = ep.vote_average ? Number(ep.vote_average).toFixed(1) : 'N/A';
                             const airDate = ep.air_date ? ep.air_date.substring(0, 7) : '';
                             return \`
-                                <div class="episode-card" data-epkey="S\${seasonNum}E\${ep.episode_number}" onclick="playEpisode(\${seasonNum}, \${ep.episode_number})">
+                                <div class="episode-card" tabindex="0" data-epkey="S\${seasonNum}E\${ep.episode_number}" onclick="playEpisode(\${seasonNum}, \${ep.episode_number})">
                                     <div style="position:relative;">
                                         <img src="\${thumb}" alt="\${name}" class="episode-thumb">
                                         <div class="episode-overlay"><span style="font-size:26px;">▶</span></div>
@@ -1187,7 +1188,7 @@ router.get("/:type/:id", async (req, res) => {
                                         if (cleaned) title = cleaned;
                                     }
                                     chips += \`
-                                        <div class="anime-ep-chip" data-epkey="S1E\${i}" onclick="renderAnimeIframe(\${i})"
+                                        <div class="anime-ep-chip" tabindex="0" data-epkey="S1E\${i}" onclick="renderAnimeIframe(\${i})"
                                             title="\${title ? 'Episode ' + i + ': ' + title.replace(/"/g, '') : 'Episode ' + i}"
                                             style="padding:12px 6px; cursor:pointer; background:#1c1c1c; border-radius:8px;
                                                    text-align:center; font-size:14px; font-weight:bold; color:#eee; transition:background 0.15s;"
@@ -1234,7 +1235,7 @@ router.get("/:type/:id", async (req, res) => {
                                 ? \`<img src="\${thumbSrc}" alt="Episode \${i}" class="episode-thumb">\`
                                 : \`<div class="episode-thumb" style="display:flex; align-items:center; justify-content:center; background:#1c1c1c; color:#555; font-size:20px; font-weight:bold;">E\${i}</div>\`;
                             cards += \`
-                               <div class="episode-card" data-epkey="S1E\${i}" onclick="renderAnimeIframe(\${i})" style="cursor:pointer;">
+                               <div class="episode-card" tabindex="0" data-epkey="S1E\${i}" onclick="renderAnimeIframe(\${i})" style="cursor:pointer;">
                                     <div style="position:relative;">
                                         \${media}
                                         <div class="episode-overlay"><span style="font-size:26px;">▶</span></div>

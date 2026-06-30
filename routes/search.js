@@ -131,6 +131,7 @@ router.get("/results", async (req, res) => {
                 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
                 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
                 <script src="/misc/navMobile.js" defer></script>
+                <script src="/misc/tvNav.js" defer></script>
                 <script src="/misc/showModal.js"></script>
             </head>
             <body>
@@ -187,7 +188,7 @@ router.get("/results", async (req, res) => {
                 const mtype = movie.media_type || 'movie';
 
                 html += `
-                    <div class="movie-card" onclick="window.location.href='/media/${mtype}/${movie.id}${nsfwFlag}'">
+                    <div class="movie-card" tabindex="0" onclick="window.location.href='/media/${mtype}/${movie.id}${nsfwFlag}'">
                         <div class="poster-container">
                         <span class="cert-badge ${certClass}">${ageCertificate}</span>
                         ${posterPath
@@ -371,6 +372,7 @@ router.get("/discover", async(req, res) => {
                 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
                 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
                 <script src="/misc/navMobile.js" defer></script>
+                <script src="/misc/tvNav.js" defer></script>
 
             </head>
             <body>
@@ -420,7 +422,7 @@ router.get("/discover", async(req, res) => {
                     
                     const certClass = ageCertificate.replace(/[^a-zA-Z0-9]/g, '-');
                     html += `
-                    <div class="movie-card" onclick="window.location.href='/media/${movie.media_type || normalizedType}/${movie.id}'">
+                    <div class="movie-card" tabindex="0" onclick="window.location.href='/media/${movie.media_type || normalizedType}/${movie.id}'">
                         <div class="poster-container">
                             <span class="cert-badge ${certClass}">${ageCertificate}</span>
                             ${posterPath

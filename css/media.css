@@ -362,9 +362,17 @@ body{
     transition:border 0.15s, transform 0.15s;
 }
 
-.episode-card:hover {
+.episode-card:hover,
+.episode-card:focus-visible,
+.anime-ep-chip:focus-visible {
     border-color: #e50914;
+    outline: none;
     transform: scale(1.02);
+}
+
+.season-card:focus-visible {
+    outline: 3px solid #e50914;
+    outline-offset: 2px;
 }
 
 .episode-thumb{

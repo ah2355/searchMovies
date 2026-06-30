@@ -93,6 +93,7 @@ router.get("/anime", async (req, res) => {
             <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
             <script src="/misc/navMobile.js" defer></script>
+            <script src="/misc/tvNav.js" defer></script>
             <script src="/misc/showModal.js"></script>
         </head>
         <body>
@@ -166,7 +167,7 @@ router.get("/anime", async (req, res) => {
                         const searchTitle = item.title.english || item.title.romaji || title;
                         const cleanTitle = searchTitle.replace(/season\s*\d+/i,'').replace(/[-–—:]/g,' ').replace(/\s+/g,' ').trim();
                         return `
-                        <div class="movie-card" onclick="window.location.href='/anime-go?title=${encodeURIComponent(cleanTitle).replace(/'/g, '%27')}&aniId=${item.id}'">
+                        <div class="movie-card" tabindex="0" onclick="window.location.href='/anime-go?title=${encodeURIComponent(cleanTitle).replace(/'/g, '%27')}&aniId=${item.id}'">
                             <div class="poster-container">
                                 <span class="cert-badge PG">EP ${ep}</span>
                                 <img src="${poster}" alt="${title}">
@@ -206,7 +207,7 @@ router.get("/anime", async (req, res) => {
             }
 
             return `
-            <div class="movie-card" onclick="window.location.href='${href}'">
+            <div class="movie-card" tabindex="0" onclick="window.location.href='${href}'">
                 <div class="poster-container">
                     <span class="cert-badge PG">PG</span>
                     <img src="${posterPath}" alt="${title}">

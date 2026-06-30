@@ -19,6 +19,7 @@ router.get("/my-watchlist", async (req, res) => {
             <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
             <script src="/misc/navMobile.js" defer></script>
+            <script src="/misc/tvNav.js" defer></script>
         </head>
         <body>
             <nav class="navbar2">
@@ -40,7 +41,7 @@ router.get("/my-watchlist", async (req, res) => {
         for (const item of watchlist) {
             const certClass = (item.certification || "PG-13").replace(/[^a-zA-Z0-9]/g, '-');
             html += `
-            <div class="movie-card" onclick="window.location.href='/media/${item.mediaType || 'movie'}/${item.imdbId}'">
+            <div class="movie-card" tabindex="0" onclick="window.location.href='/media/${item.mediaType || 'movie'}/${item.imdbId}'">
                 <div class="poster-container">
                     <span class="cert-badge ${certClass}">${item.certification || "PG-13"}</span>
                     <img src="${item.image}" alt="${item.title}">

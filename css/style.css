@@ -568,6 +568,15 @@ body{
 .slide-btn.left { left: 0; }
 .slide-btn.right { right: 0; }
 
+/* TV remote / keyboard focus — Fire TV, Android TV, and keyboard users navigate
+   via :focus, not :hover, so cards need a visible focus ring. */
+.popular-movie-card:focus-visible,
+.movie-card:focus-visible {
+  outline: 3px solid #e50914;
+  outline-offset: 2px;
+  transform: scale(1.03);
+}
+
 .popular-movie-card{
   border: 1px solid rgba(111, 99, 99, 0.577);
   transition: border-color 0.2s ease, transform 0.2s ease;
@@ -1339,9 +1348,12 @@ button{
   width: 337px;
 }
 
-.air-card:hover{
+.air-card:hover,
+.air-card:focus-visible {
   cursor: pointer;
   transform: scale(1.05);
+  outline: 3px solid #e50914;
+  outline-offset: 2px;
 }
 
 .air-card img {
