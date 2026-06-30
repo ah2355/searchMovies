@@ -292,9 +292,39 @@ body{
 }
 
 #vidlink-player{
-    margin-bottom:20px; 
-    border-radius:8px; 
+    margin-bottom:20px;
+    border-radius:8px;
     overflow:hidden;
+}
+
+/* TV / large-screen displays (Fire TV, Android TV, smart TV browsers) — these
+   typically have no mouse/scroll wheel, so a remote D-pad can't easily scroll
+   an overflow:auto container. Make the player fill most of the viewport so
+   the video and its fullscreen control are visible without scrolling. */
+@media (min-width: 1400px) {
+    #player-content {
+        width: 92vw;
+        max-width: 1700px;
+        height: 92vh;
+        max-height: 92vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    #vidlink-player {
+        flex: 1;
+        min-height: 0;
+        margin-bottom: 12px;
+    }
+
+    #vidlink-player iframe {
+        width: 100%;
+        height: 100%;
+    }
+
+    #episode-grid {
+        max-height: 200px;
+    }
 }
 
 #season-episode-box{
