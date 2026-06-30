@@ -196,6 +196,7 @@ router.get('/', async (req,res) => {
                 </script>
                 <script src="misc/genreFunc.js" defer></script>
                 <script src="/misc/tvNav.js" defer></script>
+                <script src="/misc/customSelect.js" defer></script>
             </head>
             <body>
             <div class="app-container">
@@ -271,12 +272,12 @@ router.get('/', async (req,res) => {
                                                     <input type="hidden" name="genres" id="selectedGenres">
                                                 </div>
                                                 <input type="text" name="year" id="yearRelease" placeholder="Year">
-                                                <select name="media" id="mediaSelect">
+                                                <select name="media" id="mediaSelect" class="enhance-select">
                                                     <option value="multi">Type</option>
                                                     <option value="movie">Movie</option>
                                                     <option value="tv">TV</option>
                                                 </select>
-                                                <select name="language" id="langSelect">
+                                                <select name="language" id="langSelect" class="enhance-select">
                                                     <option value="">All Languages</option>
                                                     <option value="en">English</option>
                                                     <option value="hi">Hindi</option>

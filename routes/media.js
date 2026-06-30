@@ -617,6 +617,7 @@ router.get("/:type/:id", async (req, res) => {
                     </style>
                     <script src="/misc/showModal.js"></script>
                     <script src="/misc/tvNav.js" defer></script>
+                    <script src="/misc/customSelect.js" defer></script>
                 </head>
                 <body>
                     <nav class="navbar">
@@ -704,7 +705,7 @@ router.get("/:type/:id", async (req, res) => {
 
                                         <div id="season-episode-picker" style="display:none;">
                                             <div id="season-episode-box">
-                                                <select id="season-select" onchange="handleSeasonChange(this.value)">
+                                                <select id="season-select" class="enhance-select" onchange="handleSeasonChange(this.value)">
                                                 </select>
                                                 <span style="color:#aaa; font-size:13px;" id="episode-count"></span>
                                             </div>

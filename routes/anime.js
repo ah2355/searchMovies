@@ -95,6 +95,7 @@ router.get("/anime", async (req, res) => {
             <script src="/misc/navMobile.js" defer></script>
             <script src="/misc/tvNav.js" defer></script>
             <script src="/misc/showModal.js"></script>
+            <script src="/misc/customSelect.js" defer></script>
         </head>
         <body>
             <nav class="navbar2">
@@ -119,7 +120,7 @@ router.get("/anime", async (req, res) => {
 
                 <div id="filterBox">
                     <i class="fa-solid fa-sliders" style="color:#aaa;"></i>
-                    <select id="filterBtn" onchange="window.location.href='/anime?filter=${filter}${allowAdult ? '&nsfw=true' : ''}' + (this.value ? '&genre=' + encodeURIComponent(this.value) : '')">
+                    <select id="filterBtn" class="enhance-select" onchange="window.location.href='/anime?filter=${filter}${allowAdult ? '&nsfw=true' : ''}' + (this.value ? '&genre=' + encodeURIComponent(this.value) : '')">
                         <option value="">Filter Genres</option>
                         ${genres.map(g => `<option value="${g}" ${safeGenre === g ? 'selected' : ''}>${g}</option>`).join('')}
                     </select>
