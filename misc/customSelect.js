@@ -109,6 +109,12 @@
             if (!wrapper.contains(e.target)) closeList();
         });
 
+        // D-pad remotes (FireTV etc.) don't fire click events when moving away,
+        // so use focusout to close the list whenever focus leaves the component.
+        wrapper.addEventListener('focusout', function (e) {
+            if (!wrapper.contains(e.relatedTarget)) closeList();
+        });
+
         // Keep the custom UI synced when app code changes the select directly
         // (innerHTML, .value, .style.display) — no changes needed in app code.
         select.addEventListener('change', function () {

@@ -696,6 +696,9 @@ router.get("/:type/:id", async (req, res) => {
                                     <div class="modal-content" id="player-content">
                                         <div id="player-title-box">
                                             <h3 id="player-title">Now Playing</h3>
+                                            <button id="tv-fullscreen-btn" tabindex="0" onclick="requestPlayerFullscreen()">
+                                                <i class="fa-solid fa-expand"></i> Fullscreen
+                                            </button>
                                             <span class="close" onclick="closePlayer()" id="closeBtn">&times;</span>
                                         </div>
 
@@ -1256,6 +1259,12 @@ router.get("/:type/:id", async (req, res) => {
                         document.getElementById('vidlink-player').innerHTML = '';
                         currentSeason = null;
                         currentEpisode = null;
+                    }
+
+                    function requestPlayerFullscreen() {
+                        const iframe = document.querySelector('#vidlink-player iframe');
+                        if (!iframe) return;
+                        (iframe.requestFullscreen || iframe.webkitRequestFullscreen || iframe.mozRequestFullScreen || function(){}).call(iframe);
                     }
 
                     let watchedSet = new Set();

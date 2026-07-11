@@ -301,14 +301,15 @@ body{
    scroll wheel, so a remote D-pad can't easily scroll an overflow:auto
    container. Make the player fill most of the viewport so the video and its
    fullscreen control are visible without scrolling. Gated on (hover: none)
-   so laptops/desktops with a trackpad or mouse (which can be wider than
-   1400px too, e.g. MacBooks) don't get pulled into this layout. */
-@media (min-width: 1400px) and (hover: none) {
+   so laptops/desktops with a trackpad or mouse don't get pulled into this
+   layout. Min-width 720px keeps phones out (they use the mobile layout). */
+@media (min-width: 720px) and (hover: none) {
     #player-content {
         width: 92vw;
         max-width: 1700px;
         height: 92vh;
         max-height: 92vh;
+        overflow: hidden;
         display: flex;
         flex-direction: column;
     }
@@ -326,6 +327,32 @@ body{
 
     #episode-grid {
         max-height: 200px;
+    }
+}
+
+#tv-fullscreen-btn {
+    display: none;
+}
+
+@media (hover: none) {
+    #tv-fullscreen-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: #e50914;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: 8px 16px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        margin-right: 12px;
+        flex-shrink: 0;
+    }
+    #tv-fullscreen-btn:focus-visible {
+        outline: 3px solid #fff;
+        outline-offset: 2px;
     }
 }
 
