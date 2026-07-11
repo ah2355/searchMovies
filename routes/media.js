@@ -679,11 +679,11 @@ router.get("/:type/:id", async (req, res) => {
                                 ${relatedSeasonsHtml}
 
                                 ${trailer
-                ? `<button class="trailer-btn" onclick="openTrailer('${trailer.key}')">▶ Watch Trailer</button>`
+                ? `<button class="trailer-btn" onclick="openTrailer('${trailer.key}')"><i class="fa-solid fa-play"></i> Watch Trailer</button>`
                 : `<p>No trailer available.</p>`
             }
 
-                                <a href="${isAnime && anilistId ? `/watch/anime/${anilistId}?tmdbId=${id}` : `/watch/${type}/${id}`}" class="trailer-btn">▶ Watch</a>
+                                <a href="${isAnime && anilistId ? `/watch/anime/${anilistId}?tmdbId=${id}` : `/watch/${type}/${id}`}" class="trailer-btn"><i class="fa-solid fa-play"></i> Watch</a>
 
                                 <div id="trailerModal" class="modal">
                                     <div class="modal-content">
