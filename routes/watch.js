@@ -91,9 +91,9 @@ router.get('/:type/:id', async (req, res) => {
 <body>
 
 <div class="watch-header">
-    <a href="/media/${type}/${id}" class="watch-back" tabindex="0">
+    <button class="watch-back" onclick="goBack()" tabindex="0">
         <i class="fa-solid fa-arrow-left"></i> ${title}
-    </a>
+    </button>
     <div class="watch-server-bar">
         <button class="wsrv-btn active" onclick="setServer('vidlink', this)" tabindex="0">Server 1</button>
         <button class="wsrv-btn" onclick="setServer('videasy', this)" tabindex="0">Server 2</button>
@@ -115,7 +115,7 @@ router.get('/:type/:id', async (req, res) => {
 ${type === 'tv' ? `
 <div class="watch-ep-section">
     <div class="watch-ep-header">
-        <select class="watch-season-sel enhance-select" onchange="changeSeason(this.value)">
+        <select class="watch-season-sel" onchange="changeSeason(this.value)">
             ${seasonOpts}
         </select>
         <span class="watch-ep-count">${episodes.length} episode${episodes.length !== 1 ? 's' : ''}</span>
@@ -125,7 +125,6 @@ ${type === 'tv' ? `
     </div>
 </div>` : ''}
 
-<script src="/misc/customSelect.js" defer></script>
 <script>
     const tmdbId = '${id}';
     const imdbId = '${imdbId}';
@@ -181,6 +180,14 @@ ${type === 'tv' ? `
 
     function changeSeason(s) {
         window.location.href = '/watch/' + mediaType + '/' + tmdbId + '?season=' + s + '&episode=1';
+    }
+
+    function goBack() {
+        if (history.length > 1) {
+            history.back();
+        } else {
+            window.location.href = '/media/${type}/${id}';
+        }
     }
 
     function goFullscreen() {

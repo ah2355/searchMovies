@@ -23,13 +23,17 @@ body {
 
 .watch-back {
     color: #fff;
-    text-decoration: none;
+    background: none;
+    border: none;
     font-size: 14px;
     display: flex;
     align-items: center;
     gap: 8px;
     white-space: nowrap;
     margin-right: 4px;
+    cursor: pointer;
+    font-family: inherit;
+    padding: 0;
 }
 .watch-back:hover, .watch-back:focus-visible { color: #e50914; outline: none; }
 
@@ -63,11 +67,11 @@ body {
 }
 
 /* ── Player ──────────────────────────────────────────── */
+/* Cap at 60vh so episodes are always visible below without scrolling. */
 .watch-player-wrap {
     width: 100%;
-    aspect-ratio: 16 / 9;
+    height: min(56.25vw, 60vh);
     background: #000;
-    max-height: 100vh;
 }
 .watch-player-wrap iframe {
     width: 100%;
@@ -98,6 +102,7 @@ body {
     font-size: 14px;
     font-family: inherit;
     cursor: pointer;
+    appearance: auto;
 }
 
 .watch-ep-count {
