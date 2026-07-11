@@ -683,10 +683,7 @@ router.get("/:type/:id", async (req, res) => {
                 : `<p>No trailer available.</p>`
             }
 
-                                ${isAnime
-                                    ? `<button class="trailer-btn" onclick="openPlayer()">▶ Watch</button>`
-                                    : `<a href="/watch/${type}/${id}" class="trailer-btn">▶ Watch</a>`
-                                }
+                                <a href="${isAnime && anilistId ? `/watch/anime/${anilistId}?tmdbId=${id}` : `/watch/${type}/${id}`}" class="trailer-btn">▶ Watch</a>
 
                                 <div id="trailerModal" class="modal">
                                     <div class="modal-content">
