@@ -1267,6 +1267,16 @@ router.get("/:type/:id", async (req, res) => {
                         (iframe.requestFullscreen || iframe.webkitRequestFullscreen || iframe.mozRequestFullScreen || function(){}).call(iframe);
                     }
 
+                    // On TV remote (D-pad), native scroll can't move an overflow container.
+                    // Instead, when any element inside the modal receives focus via D-pad
+                    // navigation, scroll it into view within #player-content automatically.
+                    document.getElementById('playerModal').addEventListener('focusin', function(e) {
+                        var content = document.getElementById('player-content');
+                        if (content && e.target && e.target !== content) {
+                            e.target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                        }
+                    });
+
                     let watchedSet = new Set();
  
                     async function loadWatched() {

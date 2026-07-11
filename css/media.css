@@ -307,16 +307,13 @@ body{
     #player-content {
         width: 92vw;
         max-width: 1700px;
-        height: 92vh;
         max-height: 92vh;
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
+        overflow-y: auto;
+        scroll-behavior: smooth;
     }
 
     #vidlink-player {
-        flex: 1;
-        min-height: 0;
+        height: 55vh;
         margin-bottom: 12px;
     }
 
@@ -326,7 +323,8 @@ body{
     }
 
     #episode-grid {
-        max-height: 200px;
+        max-height: none;
+        overflow-y: visible;
     }
 }
 
@@ -357,20 +355,21 @@ body{
 }
 
 /* UA-detected TV devices (Silk/FireTV, LG webOS, Samsung Tizen, Android TV).
-   Mirrors the hover:none media query above for browsers that misreport hover. */
+   Mirrors the hover:none media query above for browsers that misreport hover.
+   Uses an explicit 55vh iframe height instead of flex:1 because #vidlink-player
+   is not a direct flex child of #player-content (there is an intermediate div),
+   so flex:1 had no effect and the iframe stayed at its hard-coded 450px. */
 html.tv-device #player-content {
     width: 92vw;
     max-width: 1700px;
-    height: 92vh;
     max-height: 92vh;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
+    overflow-y: auto;
+    scroll-behavior: smooth;
+    display: block;
 }
 
 html.tv-device #vidlink-player {
-    flex: 1;
-    min-height: 0;
+    height: 55vh;
     margin-bottom: 12px;
 }
 
@@ -380,7 +379,8 @@ html.tv-device #vidlink-player iframe {
 }
 
 html.tv-device #episode-grid {
-    max-height: 200px;
+    max-height: none;
+    overflow-y: visible;
 }
 
 html.tv-device #tv-fullscreen-btn {
