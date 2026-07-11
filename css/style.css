@@ -245,6 +245,13 @@ body{
  
 }
 
+/* On TV, make the hero section as tall as the 16:9 viewport so the backdrop
+   image shows without top/bottom cropping. background-size:cover fills it
+   perfectly when the container aspect ratio matches the image. */
+html.tv-device .content-bg {
+  min-height: 56.25vw;
+}
+
 #backdrop-slider {
   position: absolute;
   inset: 0;

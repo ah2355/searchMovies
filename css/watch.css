@@ -1,0 +1,168 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    background: #0f0f0f;
+    color: #eee;
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    min-height: 100vh;
+}
+
+/* ── Header ──────────────────────────────────────────── */
+.watch-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 20px;
+    background: rgba(10,10,10,0.95);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    flex-wrap: wrap;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.watch-back {
+    color: #fff;
+    text-decoration: none;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+    margin-right: 4px;
+}
+.watch-back:hover, .watch-back:focus-visible { color: #e50914; outline: none; }
+
+.watch-server-bar {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.wsrv-btn {
+    background: rgba(255,255,255,0.07);
+    color: #ccc;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 6px;
+    padding: 6px 13px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+.wsrv-btn:hover,
+.wsrv-btn:focus-visible { border-color: #e50914; color: #fff; outline: none; }
+.wsrv-btn.active { background: #e50914; border-color: #e50914; color: #fff; }
+
+.wsrv-fs {
+    margin-left: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* ── Player ──────────────────────────────────────────── */
+.watch-player-wrap {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #000;
+    max-height: 100vh;
+}
+.watch-player-wrap iframe {
+    width: 100%;
+    height: 100%;
+    display: block;
+    border: 0;
+}
+
+/* ── Episode section ─────────────────────────────────── */
+.watch-ep-section {
+    padding: 20px;
+    max-width: 1100px;
+}
+
+.watch-ep-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 16px;
+}
+
+.watch-season-sel {
+    background: #2a2a2a;
+    color: #fff;
+    border: 1px solid #555;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.watch-ep-count {
+    color: #888;
+    font-size: 13px;
+}
+
+.watch-ep-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* ── Episode card ────────────────────────────────────── */
+.wep-card {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 10px;
+    padding: 10px 12px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+}
+.wep-card:hover,
+.wep-card:focus-visible { border-color: #e50914; background: rgba(229,9,20,0.08); outline: none; }
+.wep-card.active       { border-color: #e50914; background: rgba(229,9,20,0.13); }
+
+.wep-thumb {
+    width: 140px;
+    min-width: 140px;
+    height: 79px;
+    border-radius: 6px;
+    object-fit: cover;
+    background: #1e1e1e;
+    flex-shrink: 0;
+}
+.wep-no-thumb {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #444;
+    font-size: 24px;
+}
+
+.wep-info    { flex: 1; min-width: 0; }
+.wep-num     { font-size: 11px; color: #777; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+.wep-title   { font-size: 15px; font-weight: 600; margin-bottom: 5px; }
+.wep-overview{ font-size: 12px; color: #999; line-height: 1.5; }
+
+/* ── Mobile ──────────────────────────────────────────── */
+@media (max-width: 550px) {
+    .watch-header  { padding: 8px 12px; }
+    .wsrv-btn      { padding: 5px 9px; font-size: 12px; }
+    .watch-ep-section { padding: 12px; }
+    .wep-thumb     { width: 88px; min-width: 88px; height: 50px; }
+    .wep-title     { font-size: 13px; }
+    .wep-overview  { display: none; }
+}
+
+/* ── TV / large screens ──────────────────────────────── */
+@media (min-width: 900px) {
+    .wep-thumb     { width: 170px; min-width: 170px; height: 96px; }
+    .wep-title     { font-size: 16px; }
+    .wsrv-btn      { padding: 8px 16px; font-size: 14px; }
+    .watch-back    { font-size: 16px; }
+}
