@@ -312,19 +312,20 @@ body{
         scroll-behavior: smooth;
     }
 
-    #vidlink-player {
-        height: 55vh;
-        margin-bottom: 12px;
-    }
-
+    /* Iframe gets a direct viewport-relative height so it renders large on TV.
+       Episode grid is kept visible below the fold with its own scroll so D-pad
+       spatial navigation can reach episode cards without needing to scroll the
+       outer modal (which D-pad cannot do). */
     #vidlink-player iframe {
         width: 100%;
-        height: 100%;
+        height: 40vh;
+        display: block;
     }
 
     #episode-grid {
-        max-height: none;
-        overflow-y: visible;
+        max-height: 30vh;
+        overflow-y: auto;
+        scroll-behavior: smooth;
     }
 }
 
@@ -369,18 +370,19 @@ html.tv-device #player-content {
 }
 
 html.tv-device #vidlink-player {
-    height: 55vh;
     margin-bottom: 12px;
 }
 
 html.tv-device #vidlink-player iframe {
     width: 100%;
-    height: 100%;
+    height: 40vh;
+    display: block;
 }
 
 html.tv-device #episode-grid {
-    max-height: none;
-    overflow-y: visible;
+    max-height: 30vh;
+    overflow-y: auto;
+    scroll-behavior: smooth;
 }
 
 html.tv-device #tv-fullscreen-btn {

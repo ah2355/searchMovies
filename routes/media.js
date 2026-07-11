@@ -865,6 +865,7 @@ router.get("/:type/:id", async (req, res) => {
 
                     function openPlayer() {
                         document.getElementById('playerModal').style.display = 'flex';
+                        document.body.style.overflow = 'hidden';
 
                         if (currentType === 'movie') {
                             currentSource = 'vidlink';
@@ -1257,6 +1258,7 @@ router.get("/:type/:id", async (req, res) => {
                     function closePlayer() {
                         document.getElementById('playerModal').style.display = 'none';
                         document.getElementById('vidlink-player').innerHTML = '';
+                        document.body.style.overflow = '';
                         currentSeason = null;
                         currentEpisode = null;
                     }
