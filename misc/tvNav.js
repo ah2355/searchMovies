@@ -8,3 +8,16 @@ document.addEventListener('keydown', function (e) {
         el.click();
     }
 });
+
+// Detect Smart TV browsers by UA string — CSS hover/pointer media features
+// are unreliable on Silk (FireTV) and LG webOS, so stamp a class instead.
+(function detectTV() {
+    var ua = navigator.userAgent;
+    var isTV =
+        /Silk/i.test(ua) ||              // Amazon Fire TV / Fire Stick (Silk / Amazon Internet)
+        /Web0S|webOS/i.test(ua) ||       // LG webOS
+        /SmartTV|SMART-TV/i.test(ua) ||  // Generic smart TV
+        /Tizen/i.test(ua) ||             // Samsung Tizen
+        /Android TV/i.test(ua);          // Android TV / NVIDIA Shield
+    if (isTV) document.documentElement.classList.add('tv-device');
+})();
