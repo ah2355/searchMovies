@@ -34,7 +34,7 @@ app.use('/users', require('./routes/users'));
 app.use('/favorites', requireAuth, require('./routes/favorites'));
 app.use('/watchlist', requireAuth, require('./routes/watchlist'));
 app.use('/media', require('./routes/media'));
-app.use('/watch', requireAuth, require('./routes/watch'));
+app.use('/watch', require('./routes/watch'));
 app.use('/', require('./routes/homePage'));
 app.use('/', require('./routes/search'));
 app.use('/', require('./routes/airing'));

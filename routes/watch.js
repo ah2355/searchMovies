@@ -22,8 +22,6 @@ function tvSrc(server, tmdbId, imdbId, season, episode) {
 }
 
 router.get('/:type/:id', async (req, res) => {
-    if (!req.session.userId) return res.redirect('/users/login');
-
     const { type, id } = req.params;
     if (type !== 'movie' && type !== 'tv') return res.status(404).send('Not found');
 
