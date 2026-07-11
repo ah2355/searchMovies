@@ -532,6 +532,7 @@ html.tv-device .content-bg {
 .popular-poster-container{
   position: relative;
   height: 240px;
+  width: 150px;
   overflow: hidden;
 }
 
