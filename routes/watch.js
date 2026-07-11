@@ -27,13 +27,15 @@ router.get('/anime/:anilistId', async (req, res) => {
               Media(id: $id, type: ANIME) {
                 title { romaji english }
                 episodes
+                nextAiringEpisode { episode }
                 isAdult
               }
             }`, { id: parseInt(anilistId) });
 
         const media        = data?.data?.Media;
         const title        = media?.title?.english || media?.title?.romaji || 'Anime';
-        const episodeCount = media?.episodes || 24;
+        const episodeCount = media?.episodes
+            || (media?.nextAiringEpisode ? media.nextAiringEpisode.episode - 1 : 24);
         const isAdult      = !!media?.isAdult;
 
         const slug         = toSlug(title);
@@ -124,7 +126,7 @@ router.get('/anime/:anilistId', async (req, res) => {
         document.querySelector('.watch-player-wrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
         const url = new URL(window.location.href);
         url.searchParams.set('episode', ep);
-        history.pushState({}, '', url);
+        history.replaceState({}, '', url);
     }
 
     function setServer(srv, btn) {
@@ -363,7 +365,7 @@ ${type === 'tv' ? `
         const url = new URL(window.location.href);
         url.searchParams.set('season', currentSeason);
         url.searchParams.set('episode', ep);
-        history.pushState({}, '', url);
+        history.replaceState({}, '', url);
     }
 
     function changeSeason(s) {
