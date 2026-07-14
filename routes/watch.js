@@ -90,7 +90,9 @@ router.get('/anime/:anilistId', async (req, res) => {
 
 <div class="watch-player-wrap">
     <iframe id="watch-iframe" src="${initialSrc}"
-            allowfullscreen referrerpolicy="origin" frameborder="0"></iframe>
+            allowfullscreen referrerpolicy="origin" frameborder="0"
+            sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-fullscreen"
+            allow="autoplay; fullscreen; picture-in-picture; encrypted-media"></iframe>
 </div>
 
 <div class="watch-ep-section">
@@ -299,7 +301,9 @@ router.get('/:type/:id', async (req, res) => {
 
 <div class="watch-player-wrap">
     <iframe id="watch-iframe" src="${initialSrc}"
-            allowfullscreen referrerpolicy="origin" frameborder="0"></iframe>
+            allowfullscreen referrerpolicy="origin" frameborder="0"
+            sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-fullscreen"
+            allow="autoplay; fullscreen; picture-in-picture; encrypted-media"></iframe>
 </div>
 
 ${type === 'tv' ? `
