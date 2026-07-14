@@ -51,8 +51,8 @@ html {
 }
 
 .nav-item:hover{
-    background-color:rgba(255, 255, 255, 0.15); 
-    color: yellow;
+    background-color: rgba(255, 255, 255, 0.12);
+    color: #fc466b;
 }
 
 .logoImg2{
@@ -149,50 +149,76 @@ h2 {
     text-align: center;
 }
 
-#userName{
-    width: 280px;
+#userName, #password {
+    width: 100%;
+    box-sizing: border-box;
     padding: 13px 15px;
     border: 1px solid rgba(255,255,255,0.15);
     background: rgba(0, 0, 0, 0.55);
     color: white;
     border-radius: 12px;
+    font-size: 15px;
+    font-family: inherit;
+    transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-#userName::placeholder{
-    color:rgb(125, 113, 113);
+#userName::placeholder, #password::placeholder {
+    color: rgba(255,255,255,0.3);
 }
 
-#userName:focus{
+#userName:focus, #password:focus {
     outline: none;
     border-color: #fc466b;
-    box-shadow: 0 0 0 3px rgba(252, 70, 107, 0.25);
+    box-shadow: 0 0 0 3px rgba(252, 70, 107, 0.2);
 }
 
-#password{
-    width: 280px;
-    padding: 13px 15px;
-    border: 1px solid rgba(255,255,255,0.15);
-    background: rgba(0, 0, 0, 0.55);
-    color: white;
-    border-radius: 12px;
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    margin-bottom: 16px;
+    text-align: left;
 }
 
-#password:focus{
-    outline: none;
-    border-color: #fc466b;
-    box-shadow: 0 0 0 3px rgba(252, 70, 107, 0.25);
+.input-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.55);
+    letter-spacing: 0.3px;
 }
 
-#password::placeholder{
-    color:rgb(125, 113, 113);
+.pw-wrap {
+    position: relative;
 }
 
-#hereBtn{
-    color: yellow;
+.pw-wrap #password {
+    padding-right: 46px;
 }
 
-#hereBtn:hover{
-    color: purple;
+.pw-toggle {
+    position: absolute;
+    right: 13px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.35);
+    cursor: pointer;
+    font-size: 15px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    transition: color 0.15s;
+}
+.pw-toggle:hover { color: rgba(255,255,255,0.75); }
+
+#hereBtn {
+    color: #c084fc;
+    text-decoration: none;
+}
+
+#hereBtn:hover {
+    color: #e879f9;
 }
 
 #submit{

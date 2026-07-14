@@ -22,8 +22,8 @@ router.get('/', async (req,res) => {
     displayName = displayName.charAt(0).toUpperCase() + displayName.substring(1);
     
     const authAction = isGuest
-        ? `<a href="/users/login" class="nav-item" id="login-link"><i class="fa-solid fa-arrow-right-to-bracket" style="color:red;"></i> Log In</a>`
-        : `<a href="/users/login" class="nav-item"><i class="fa-solid fa-user" style="color:red"></i> Account</a>`;
+        ? `<a href="/users/login" class="nav-item" id="login-link"><i class="fa-solid fa-arrow-right-to-bracket"></i> Log In</a>`
+        : `<a href="/users/login" class="nav-item"><i class="fa-solid fa-user"></i> Account</a>`;
     
     const api_key = process.env.TMDB_API_KEY;
     const page = Number(req.query.page) || 1;
@@ -219,9 +219,9 @@ router.get('/', async (req,res) => {
 
                                     <div class="nav-links" id="navLinks">
                                         <span class="nav-greeting">Hello, ${displayName}!</span>
-                                        <a href="/favorites" id="fav-list" class="nav-item"><i class="fa-solid fa-heart" style="color:red"></i> Favorite List</a>
+                                        <a href="/favorites" id="fav-list" class="nav-item"><i class="fa-solid fa-heart"></i> Favorite List</a>
                                         <div class="genre-wrapper">
-                                            <button type="button" class="nav-item" id="browseBtn"><p><i class="fa-solid fa-border-all" style="color:red;"></i> Browse</p></button>
+                                            <button type="button" class="nav-item" id="browseBtn"><p><i class="fa-solid fa-border-all"></i> Browse</p></button>
                                             <div id="browseBox" class="browse-box hidden">
                                                 <a href="/my-watchlist"><i class="fa-solid fa-bookmark"></i> My Watchlist</a>
                                                 <a href="/airing"><i class="fa-solid fa-tv"></i> Airing Today</a>
@@ -240,7 +240,7 @@ router.get('/', async (req,res) => {
                                 </nav>
                                 <div id="backdrop-slider"></div>
                                 <div class="content-overlay">
-                                    <h2 id="main-header">Everything in one place</h2> 
+                                    <h2 id="main-header">Find your next obsession.</h2>
                                     <form id="movieForm" action="/results" method="get">
                                         <div class="search-container" style="position: relative; display: inline-block;">
                                             <input type="text" name="q" id="movieName" placeholder="Search movies...">
@@ -302,7 +302,7 @@ router.get('/', async (req,res) => {
                         <div id="continue-watching-wrap" style="display:none;">
                             <div id="popular-movie">
                                 <div id="cw-section" class="slider-container">
-                                    <h2>| Continue Watching</h2>
+                                    <h2>Continue Watching</h2>
                                     <button type="button" class="slide-btn left" onclick="scrollGrid('cw-grid', -300)">❮</button>
                                     <div id="cw-grid" class="popular-movie-grid"></div>
                                     <button type="button" class="slide-btn right" onclick="scrollGrid('cw-grid', 300)">❯</button>
@@ -314,7 +314,7 @@ router.get('/', async (req,res) => {
         html += `
             <div id="popular-movie">
                 <div class="slider-container">
-                    <h2>| Because You Watched ${recTitle}</h2>
+                    <h2>Because You Watched ${recTitle}</h2>
                     <button type="button" class="slide-btn left" onclick="scrollGrid('rec-grid', -300)">❮</button>
                     <div id="rec-grid" class="popular-movie-grid">`;
 
@@ -353,7 +353,7 @@ router.get('/', async (req,res) => {
 
     html += `<div id="popular-movie">
         <div id="movie-section" class="slider-container">
-            <h2>| Trending Movies</h2>
+            <h2>Trending Movies</h2>
             <button type="button" class="slide-btn left" onclick="scrollGrid('movie-grid', -300)">❮</button>
         <div id="movie-grid" class="popular-movie-grid"> `;
 
@@ -397,7 +397,7 @@ router.get('/', async (req,res) => {
     // Trending Shows Section
      html+= ` <div id="popular-movie">
                         <div id="show-section" class="slider-container">
-                            <h2>| Trending Shows</h2>
+                            <h2>Trending Shows</h2>
                             <button type="button" class="slide-btn left" onclick="scrollGrid('show-grid', -300)">❮</button>
                         <div id="show-grid" class="popular-movie-grid">`;
 
@@ -441,7 +441,7 @@ router.get('/', async (req,res) => {
     // Trending Today Section
     html+= ` <div id="popular-movie">
                         <div id="show-section" class="slider-container">
-                            <h2>| Trending Today</h2>
+                            <h2>Trending Today</h2>
                             <button type="button" class="slide-btn left" onclick="scrollGrid('td-grid', -300)">❮</button>
                         <div id="td-grid" class="popular-movie-grid">`;
 
@@ -487,7 +487,7 @@ router.get('/', async (req,res) => {
     // Airing Today Section
     html+= ` <div id="popular-movie">
                         <div id="show-section" class="slider-container">
-                            <a href="/airing" id="air-td-link"<h2 class="airtdHead">| Airing Today ⬈</h2></a>
+                            <a href="/airing" id="air-td-link"<h2 class="airtdHead">Airing Today ⬈</h2></a>
                             <button type="button" class="slide-btn left" onclick="scrollGrid('airtd-grid', -300)">❮</button>
                         <div id="airtd-grid" class="popular-movie-grid">`;
     
@@ -531,7 +531,7 @@ router.get('/', async (req,res) => {
 
     html += `<div id="popular-movie">
     <div id="show-section" class="slider-container">
-        <a href="/anime" id="air-td-link"><h2 class="airtdHead">| Trending Anime ⬈</h2></a>
+        <a href="/anime" id="air-td-link"><h2 class="airtdHead">Trending Anime ⬈</h2></a>
         <button type="button" class="slide-btn left" onclick="scrollGrid('anime-grid', -300)">❮</button>
         <div id="anime-grid" class="popular-movie-grid">`;
 
@@ -570,7 +570,7 @@ router.get('/', async (req,res) => {
 
     html += `<div id="popular-movie">
     <div id="show-section" class="slider-container">
-        <a href="/anime?filter=airing" id="air-td-link"><h2 class="airtdHead">| Airing Anime ⬈</h2></a>
+        <a href="/anime?filter=airing" id="air-td-link"><h2 class="airtdHead">Airing Anime ⬈</h2></a>
         <button type="button" class="slide-btn left" onclick="scrollGrid('airing-anime-grid', -300)">❮</button>
         <div id="airing-anime-grid" class="popular-movie-grid">`;
 

@@ -107,6 +107,11 @@ body{
   gap: 20px;
 }
 
+.nav-links .nav-item i,
+.nav-links #browseBtn i { color: rgba(255,255,255,0.65); transition: color 0.15s; }
+.nav-links .nav-item:hover i,
+.nav-links #browseBtn:hover i { color: #e50914; }
+
 .nav-title {
   font-size: 24px;
   font-weight: 700;
@@ -195,9 +200,9 @@ body{
 }
 
 #browseBtn:hover {
-  background-color: rgba(255, 255, 255, 0.15); 
+  background-color: rgba(255, 255, 255, 0.1);
   border-radius: 5px;
-  color: rgb(223, 211, 39);
+  color: #e50914;
 }
 
 #browseBtn p{
@@ -209,13 +214,16 @@ body{
   position: absolute;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-  background: rgb(35, 31, 31);
-  border: 1px solid #ccc;
-  padding: 5px;
+  gap: 6px;
+  background: rgba(12, 12, 12, 0.96);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+  padding: 10px;
   width: 280px;
   z-index: 10;
-  border-radius: 15px;
+  border-radius: 16px;
   top: 125%;
   left: auto;
   right: -100%;
@@ -223,18 +231,20 @@ body{
 
 .browse-box a {
   display: block;
-  color: white;
+  color: rgba(255,255,255,0.8);
   text-decoration: none;
-  padding: 6px 10px;
-  border-radius: 25px;
+  padding: 8px 10px;
+  border-radius: 10px;
   text-align: center;
   font-size: 0.85rem;
-  width: 126px;
+  width: 100%;
+  transition: background 0.15s, color 0.15s;
 }
 
 .browse-box a:hover {
-  background-color: rgb(32, 115, 130);
-  box-shadow: inset 0 1px 4px #22b3b0, 0 0 20px 2px #12bb83;
+  background: rgba(229, 9, 20, 0.18);
+  color: #ff5565;
+  box-shadow: none;
 }
 
 .content-bg{
@@ -320,21 +330,23 @@ html.tv-device .content-bg {
 }
 
 #movieForm #movieName{
-  background: transparent;
-  background-color: black;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1.5px solid rgba(255,255,255,0.18);
   position: relative;
-  width: 400px;
-  font-size: medium;
-  border-width: 2px;
-  color:white;
-  transition:  0.3s ease;
-  padding: 20px;
+  width: 420px;
+  font-size: 16px;
+  color: white;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  padding: 18px 50px 18px 22px;
+  border-radius: 16px;
 }
 
 #movieName:focus{
   outline: none;
-  border-color: rgb(60, 205, 12);
-  box-shadow: 0 1px 4px #18580e inset, 0 3px 20px 2px #104e08 !important;
+  border-color: #e50914;
+  box-shadow: 0 0 0 3px rgba(229, 9, 20, 0.2);
 }
 
 #srchImg{
@@ -433,16 +445,22 @@ html.tv-device .content-bg {
 }
 
 #movieForm #submit{
-  background: transparent;
-  background-color: black;
+  background: linear-gradient(135deg, #e50914, #ff4d4d);
   color: white;
-  margin-top: 24px;
-  padding: 15px;
-  border:none;
+  margin-top: 16px;
+  padding: 14px 36px;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 0.3px;
+  transition: filter 0.2s, transform 0.2s;
 }
 
 #movieForm #submit:hover{
-  filter:brightness(0.5);
+  filter: brightness(1.12);
+  transform: translateY(-1px);
 }
 
 * {
@@ -548,6 +566,15 @@ html.tv-device .content-bg {
   animation: dropIn 0.4s ease-out forwards;
 }
 
+.slider-container h2 {
+  padding-left: 14px;
+  border-left: 4px solid #e50914;
+  margin-left: 40px;
+  font-size: 20px;
+  letter-spacing: 0.3px;
+  margin-bottom: 8px;
+}
+
 
 .slider-header {
   display: flex;
@@ -610,31 +637,37 @@ html.tv-device .content-bg {
 
 .play-overlay {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  border-radius: 10px;
-  height: 99%;
+  inset: 0;
+  border-radius: 15px;
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
   align-items: center;
   opacity: 0;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.2s ease;
 }
 
 .popular-movie-card:hover .play-overlay {
   opacity: 1;
-  width: 160px;    
 }
 
-
 .play-icon {
-  font-size: 17px;
-  color: white;
-  background: rgb(215 251 180 / 73%);
-  padding: 12px;
+  width: 46px;
+  height: 46px;
+  background: rgba(229, 9, 20, 0.92);
   border-radius: 50%;
-  border: 2px solid white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: white;
+  box-shadow: 0 4px 24px rgba(229, 9, 20, 0.5);
+  transform: scale(0.82);
+  transition: transform 0.2s ease;
+}
+
+.popular-movie-card:hover .play-icon {
+  transform: scale(1);
 }
 
 .movieInfo{
@@ -681,15 +714,19 @@ html.tv-device .content-bg {
 
 #air-td-link{
   text-decoration: none;
+  color: rgba(49, 232, 162, 0.94);
 }
 
 .airtdHead{
-  margin-left: 22px;
-  color: rgba(49, 232, 162, 0.94);
+  margin-left: 40px;
+  padding-left: 14px;
+  border-left: 4px solid #e50914;
+  color: white;
   font-weight: bold;
   text-decoration: none;
-  font-size: x-large;
+  font-size: 20px;
   margin-bottom: 10px;
+  letter-spacing: 0.3px;
 }
 
 #air-td-link:hover{

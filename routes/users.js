@@ -142,17 +142,36 @@ router.get("/login", (req,res) => {
                 </nav>
                 <div class="auth-wrapper">
                     <div id = "loginContainer">
-                        <div id = "loginHeader">
-                            <img src="/images/icon-removebg.png" alt="Log" class="logoImg">
-                            <h1>SearchMovies</h1><br><br><br>
+                        <div id="loginHeader">
+                            <img src="/images/icon-removebg.png" alt="Logo" class="logoImg">
+                            <h1>SearchMovies</h1>
                         </div>
-                        <h2>Sign in</h2>
-                        <form action = "/users/login" id="loginForm" method = "post">
-                            <input type="text" id="userName" name="username" placeholder="Email or Username" required><br><br>
-                            <input type="password" id="password" name="password" placeholder="Password" required><br><br>
+                        <h2 style="margin-top:18px;">Sign in</h2>
+                        <form action="/users/login" id="loginForm" method="post">
+                            <div class="input-group">
+                                <label class="input-label" for="userName">Username or Email</label>
+                                <input type="text" id="userName" name="username" placeholder="Enter your username" autocomplete="username" required>
+                            </div>
+                            <div class="input-group">
+                                <label class="input-label" for="password">Password</label>
+                                <div class="pw-wrap">
+                                    <input type="password" id="password" name="password" placeholder="Enter your password" autocomplete="current-password" required>
+                                    <button type="button" class="pw-toggle" onclick="togglePw()" tabindex="-1" aria-label="Show password">
+                                        <i class="fa-solid fa-eye" id="pw-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
                             <input type="submit" id="submit" value="Sign In">
                         </form>
-                        <p style="margin-top: 24px; text-align: center;">Don't have an account? Create one <a href="/users/register" id="hereBtn">here</a></p>
+                        <p style="margin-top:20px; text-align:center; color:rgba(255,255,255,0.6);">Don't have an account? <a href="/users/register" id="hereBtn">Create one</a></p>
+                        <script>
+                            function togglePw() {
+                                var pw = document.getElementById('password');
+                                var eye = document.getElementById('pw-eye');
+                                if (pw.type === 'password') { pw.type = 'text'; eye.className = 'fa-solid fa-eye-slash'; }
+                                else { pw.type = 'password'; eye.className = 'fa-solid fa-eye'; }
+                            }
+                        </script>
                     </div>
                 </div>
 
@@ -287,30 +306,58 @@ router.get("/register", (req, res) => {
     res.send(`<!DOCTYPE html>
         <html>
             <head>
-                <meta charset = "utf-8">
+                <meta charset="utf-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <link rel="stylesheet" href="/css/login.css">
                 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+                <link rel="icon" type="image/x-icon" href="/images/icon.png">
                 <title>Create Account - SearchMovie</title>
             </head>
             <body class="loginBody">
+                <nav class="navbar">
+                    <div class="nav-left">
+                        <img src="/images/icon.png" alt="Logo" class="logoImg2">
+                        <a href="/" id="titleLink"><span class="nav-title">SearchMovie</span></a>
+                    </div>
+                    <div class="nav-right">
+                        <a href="/users/login" class="nav-item"><i class="fa-solid fa-arrow-left"></i> Sign In</a>
+                    </div>
+                </nav>
                 <div class="auth-wrapper">
                     <div id="loginContainer">
-                            <div id="loginContent">
-                            <div id="loginHeader">
-                                <img src="/images/icon-removebg.png" alt="Logo" class="logoImg">
-                                <h1>SearchMovies</h1>
-                            </div>
-                            <h2>Create Account</h2>
-                            <form action="/users/register" method="post" id="loginForm">
-                                <input type="text" id="userName" name="username" placeholder="Email or Username" required><br><br>
-                                <input type="password" id="password" name="password" placeholder="Password" required><br><br>
-                                <input type="submit" id="submitAccnt" value="Create Account">
-                            </form>
-                            <p style="color: white; margin-top: 15px; text-align: center;">
-                                Already have an account? <a href="/users/login" style="color: #dfd327;">Login</a>
-                            </p>
+                        <div id="loginHeader">
+                            <img src="/images/icon-removebg.png" alt="Logo" class="logoImg">
+                            <h1>SearchMovies</h1>
                         </div>
+                        <h2 style="margin-top:18px;">Create Account</h2>
+                        <form action="/users/register" method="post" id="loginForm">
+                            <div class="input-group">
+                                <label class="input-label" for="userName">Username or Email</label>
+                                <input type="text" id="userName" name="username" placeholder="Choose a username" autocomplete="username" required>
+                            </div>
+                            <div class="input-group">
+                                <label class="input-label" for="password">Password</label>
+                                <div class="pw-wrap">
+                                    <input type="password" id="password" name="password" placeholder="Create a password" autocomplete="new-password" required>
+                                    <button type="button" class="pw-toggle" onclick="togglePw()" tabindex="-1" aria-label="Show password">
+                                        <i class="fa-solid fa-eye" id="pw-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <input type="submit" id="submitAccnt" value="Create Account">
+                        </form>
+                        <p style="margin-top:20px; text-align:center; color:rgba(255,255,255,0.6);">
+                            Already have an account? <a href="/users/login" id="hereBtn">Sign in</a>
+                        </p>
+                        <script>
+                            function togglePw() {
+                                var pw = document.getElementById('password');
+                                var eye = document.getElementById('pw-eye');
+                                if (pw.type === 'password') { pw.type = 'text'; eye.className = 'fa-solid fa-eye-slash'; }
+                                else { pw.type = 'password'; eye.className = 'fa-solid fa-eye'; }
+                            }
+                        </script>
                     </div>
                 </div>
             </body>
@@ -390,13 +437,32 @@ router.get("/privacy", (req, res) => {
                         <span class="nav-title">SearchMovie</span>
                     </a>
                 </div>
-                <div class="nav-right">
-                    <button onclick="window.history.back()" class="nav-item" style="background:none; border:none; cursor:pointer;">
-                        <i class="fa-solid fa-left-long"></i> Back
+                <button class="hamburger" id="privacyHamburger">
+                    <span class="bar"></span>
+                    <span class="bar"></span>
+                    <span class="bar"></span>
+                </button>
+                <div class="nav-right" id="privacyNavLinks">
+                    <button onclick="window.history.back()" class="nav-item" style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:7px; font-size:14px; font-weight:500; color:#fff; padding:8px 16px; transition:background 0.2s, border-color 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.15)';this.style.borderColor='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.08)';this.style.borderColor='rgba(255,255,255,0.15)'">
+                        <i class="fa-solid fa-arrow-left" style="font-size:13px;"></i> Back
                     </button>
                 </div>
-
             </nav>
+            <script>
+                var ph = document.getElementById('privacyHamburger');
+                var pn = document.getElementById('privacyNavLinks');
+                ph.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    pn.classList.toggle('active');
+                    ph.classList.toggle('active');
+                });
+                document.addEventListener('click', function(e) {
+                    if (!ph.contains(e.target) && !pn.contains(e.target)) {
+                        pn.classList.remove('active');
+                        ph.classList.remove('active');
+                    }
+                });
+            </script>
 
             <div class="auth-wrapper" style="align-items:flex-start; margin-top:20px;">
                 <div id="loginContainer" style="max-width:700px; width:90%; text-align:left;">
