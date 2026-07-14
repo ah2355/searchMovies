@@ -731,6 +731,16 @@ router.get('/', async (req,res) => {
 
             loadContinueWatching();
         </script>
+
+        <footer style="margin-top:40px; padding:24px 20px; border-top:1px solid rgba(255,255,255,0.08); text-align:center;">
+            <p style="color:#555; font-size:13px; margin:0;">
+                &copy; ${new Date().getFullYear()} SearchMovie&trade; &mdash; All rights reserved &middot;
+                <a href="/users/privacy" style="color:#777; text-decoration:none;">Privacy Policy</a>
+            </p>
+            <p style="color:#444; font-size:11px; margin:6px 0 0;">
+                SearchMovie does not host any media content. All streaming is provided by independent third-party sources.
+            </p>
+        </footer>
      </body>
     </html>`;
 

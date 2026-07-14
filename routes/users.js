@@ -453,6 +453,27 @@ router.get("/privacy", (req, res) => {
 
                     <h3 style="margin-top:20px;">10. Contact</h3>
                     <p style="color:#ccc; line-height:1.7;">If you have questions about this privacy policy, contact us at <a style="text-decoration: none; color: violet;" href="mailto:wolfro979@gmail.com">wolfro979@gmail.com</a></p>
+
+                    <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:36px; padding-top:24px; border-top:1px solid rgba(255,255,255,0.08);">
+                        <span style="display:inline-flex; align-items:center; gap:7px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:20px; padding:7px 14px; font-size:13px; color:#ccc;">
+                            <i class="fa-solid fa-shield-halved" style="color:#7c3aed;"></i> DMCA Compliant
+                        </span>
+                        <span style="display:inline-flex; align-items:center; gap:7px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:20px; padding:7px 14px; font-size:13px; color:#ccc;">
+                            <i class="fa-brands fa-github" style="color:#ccc;"></i> Open Source
+                        </span>
+                        <span style="display:inline-flex; align-items:center; gap:7px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:20px; padding:7px 14px; font-size:13px; color:#ccc;">
+                            <i class="fa-solid fa-ban" style="color:#e50914;"></i> No Ads
+                        </span>
+                        <span style="display:inline-flex; align-items:center; gap:7px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:20px; padding:7px 14px; font-size:13px; color:#ccc;">
+                            <i class="fa-solid fa-eye-slash" style="color:#e50914;"></i> No Tracking
+                        </span>
+                        <span style="display:inline-flex; align-items:center; gap:7px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:20px; padding:7px 14px; font-size:13px; color:#ccc;">
+                            <i class="fa-solid fa-server" style="color:#22c55e;"></i> No Media Stored
+                        </span>
+                        <span style="display:inline-flex; align-items:center; gap:7px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:20px; padding:7px 14px; font-size:13px; color:#ccc;">
+                            <i class="fa-solid fa-lock" style="color:#22c55e;"></i> Passwords Hashed
+                        </span>
+                    </div>
                 </div>
             </div>
         </body>
