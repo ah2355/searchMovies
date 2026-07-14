@@ -140,6 +140,15 @@ router.get('/', async (req,res) => {
     }
     const firstBackdrop = moviesData.results?.find(m => m.backdrop_path)?.backdrop_path;
 
+    const featured = trendingData.results?.find(m => m.backdrop_path);
+    const featuredType = featured?.media_type || 'movie';
+    const featuredTitle = (featured?.title || featured?.name || '').replace(/</g, '&lt;');
+    const featuredOverview = (featured?.overview || '').slice(0, 200).replace(/</g, '&lt;');
+    const featuredRating = featured?.vote_average ? Number(featured.vote_average).toFixed(1) : 'N/A';
+    const featuredYear = (featured?.release_date || featured?.first_air_date || '').substring(0, 4);
+    const featuredBackdrop = featured?.backdrop_path ? `https://image.tmdb.org/t/p/w1280${featured.backdrop_path}` : '';
+    const featuredUrl = featured ? `/media/${featuredType}/${featured.id}` : '/';
+
     let recTitle = '';
     let recResults = [];
     if (!isGuest) {
@@ -298,10 +307,43 @@ router.get('/', async (req,res) => {
                         </div>
                         <br><br>`;
 
-                        html+= ` 
+    if (featured) {
+        html += `
+        <div class="featured-spotlight section-hidden" onclick="window.location.href='${featuredUrl}'" tabindex="0" role="button" aria-label="Watch ${featuredTitle}">
+            <div class="featured-bg" style="background-image:url('${featuredBackdrop}')"></div>
+            <div class="featured-gradient"></div>
+            <div class="featured-content">
+                <span class="featured-label">✦ Featured Today</span>
+                <h2 class="featured-title">${featuredTitle}</h2>
+                <div class="featured-meta">
+                    <span class="featured-rating">★ ${featuredRating}</span>
+                    ${featuredYear ? `<span class="featured-year">${featuredYear}</span>` : ''}
+                    <span class="featured-type">${featuredType === 'movie' ? 'Movie' : 'TV Series'}</span>
+                </div>
+                ${featuredOverview ? `<p class="featured-overview">${featuredOverview}${(featured.overview?.length || 0) > 200 ? '…' : ''}</p>` : ''}
+                <a href="${featuredUrl}" class="featured-btn" onclick="event.stopPropagation()">Watch Now →</a>
+            </div>
+        </div>`;
+    }
+
+    html += `
+        <div class="mood-row section-hidden">
+            <a href="/discover?genres=Action" class="mood-pill">💥 Action</a>
+            <a href="/discover?genres=Comedy" class="mood-pill">😄 Comedy</a>
+            <a href="/discover?genres=Horror" class="mood-pill">💀 Horror</a>
+            <a href="/discover?genres=Romance" class="mood-pill">💕 Romance</a>
+            <a href="/discover?genres=Sci-Fi" class="mood-pill">🚀 Sci-Fi</a>
+            <a href="/anime" class="mood-pill">⚔️ Anime</a>
+            <a href="/discover?genres=Thriller" class="mood-pill">🎭 Thriller</a>
+            <a href="/discover?genres=Crime" class="mood-pill">🔍 Crime</a>
+            <a href="/discover?genres=Documentary" class="mood-pill">🎙️ Documentary</a>
+            <a href="/discover?genres=Animation" class="mood-pill">🎨 Animation</a>
+        </div>`;
+
+                        html+= `
                         <div id="continue-watching-wrap" style="display:none;">
                             <div id="popular-movie">
-                                <div id="cw-section" class="slider-container">
+                                <div id="cw-section" class="slider-container section-hidden">
                                     <h2>Continue Watching</h2>
                                     <button type="button" class="slide-btn left" onclick="scrollGrid('cw-grid', -300)">❮</button>
                                     <div id="cw-grid" class="popular-movie-grid"></div>
@@ -313,7 +355,7 @@ router.get('/', async (req,res) => {
     if (recResults.length > 0) {
         html += `
             <div id="popular-movie">
-                <div class="slider-container">
+                <div class="slider-container section-hidden">
                     <h2>Because You Watched ${recTitle}</h2>
                     <button type="button" class="slide-btn left" onclick="scrollGrid('rec-grid', -300)">❮</button>
                     <div id="rec-grid" class="popular-movie-grid">`;
@@ -352,7 +394,7 @@ router.get('/', async (req,res) => {
     }
 
     html += `<div id="popular-movie">
-        <div id="movie-section" class="slider-container">
+        <div id="movie-section" class="slider-container section-hidden">
             <h2>Trending Movies</h2>
             <button type="button" class="slide-btn left" onclick="scrollGrid('movie-grid', -300)">❮</button>
         <div id="movie-grid" class="popular-movie-grid"> `;
@@ -396,7 +438,7 @@ router.get('/', async (req,res) => {
 
     // Trending Shows Section
      html+= ` <div id="popular-movie">
-                        <div id="show-section" class="slider-container">
+                        <div id="show-section" class="slider-container section-hidden">
                             <h2>Trending Shows</h2>
                             <button type="button" class="slide-btn left" onclick="scrollGrid('show-grid', -300)">❮</button>
                         <div id="show-grid" class="popular-movie-grid">`;
@@ -440,7 +482,7 @@ router.get('/', async (req,res) => {
     
     // Trending Today Section
     html+= ` <div id="popular-movie">
-                        <div id="show-section" class="slider-container">
+                        <div id="show-section" class="slider-container section-hidden">
                             <h2>Trending Today</h2>
                             <button type="button" class="slide-btn left" onclick="scrollGrid('td-grid', -300)">❮</button>
                         <div id="td-grid" class="popular-movie-grid">`;
@@ -486,7 +528,7 @@ router.get('/', async (req,res) => {
 
     // Airing Today Section
     html+= ` <div id="popular-movie">
-                        <div id="show-section" class="slider-container">
+                        <div id="show-section" class="slider-container section-hidden">
                             <a href="/airing" id="air-td-link"<h2 class="airtdHead">Airing Today ⬈</h2></a>
                             <button type="button" class="slide-btn left" onclick="scrollGrid('airtd-grid', -300)">❮</button>
                         <div id="airtd-grid" class="popular-movie-grid">`;
@@ -503,8 +545,9 @@ router.get('/', async (req,res) => {
 
         html += `
                 <div class="popular-movie-card" tabindex="0" onclick="window.location.href='/media/tv/${air.id}'">
-                    <div class="popular-poster-container"> 
+                    <div class="popular-poster-container">
                         <img class="popular-movie-img" src="${posterPath}" alt="${seriesTitle} poster">
+                        <span class="live-badge"><span class="live-dot"></span>LIVE</span>
                         <div class="play-overlay">
                             <div class="play-icon"><i class="fa-solid fa-play"></i></div>
                         </div>
@@ -530,7 +573,7 @@ router.get('/', async (req,res) => {
     // End of Airing Today Section
 
     html += `<div id="popular-movie">
-    <div id="show-section" class="slider-container">
+    <div id="show-section" class="slider-container section-hidden">
         <a href="/anime" id="air-td-link"><h2 class="airtdHead">Trending Anime ⬈</h2></a>
         <button type="button" class="slide-btn left" onclick="scrollGrid('anime-grid', -300)">❮</button>
         <div id="anime-grid" class="popular-movie-grid">`;
@@ -569,7 +612,7 @@ router.get('/', async (req,res) => {
     </div>`;
 
     html += `<div id="popular-movie">
-    <div id="show-section" class="slider-container">
+    <div id="show-section" class="slider-container section-hidden">
         <a href="/anime?filter=airing" id="air-td-link"><h2 class="airtdHead">Airing Anime ⬈</h2></a>
         <button type="button" class="slide-btn left" onclick="scrollGrid('airing-anime-grid', -300)">❮</button>
         <div id="airing-anime-grid" class="popular-movie-grid">`;
@@ -730,6 +773,21 @@ router.get('/', async (req,res) => {
             }
 
             loadContinueWatching();
+
+            // Scroll reveal
+            (function() {
+                var els = document.querySelectorAll('.section-hidden');
+                if (!els.length) return;
+                var io = new IntersectionObserver(function(entries) {
+                    entries.forEach(function(entry) {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add('section-visible');
+                            io.unobserve(entry.target);
+                        }
+                    });
+                }, { threshold: 0.08 });
+                els.forEach(function(el) { io.observe(el); });
+            })();
         </script>
 
         <footer style="margin-top:40px; padding:24px 20px; border-top:1px solid rgba(255,255,255,0.08); text-align:center;">

@@ -294,6 +294,23 @@ router.get('/api/search-suggestions', async (req, res) => {
     }
 });
 
+const moodMeta = {
+    "Action":      { emoji: "💥", label: "Action",      vibe: "High-octane thrills & explosions" },
+    "Comedy":      { emoji: "😄", label: "Comedy",      vibe: "Good vibes & big laughs" },
+    "Horror":      { emoji: "💀", label: "Horror",      vibe: "Things that go bump in the night" },
+    "Romance":     { emoji: "💕", label: "Romance",     vibe: "Love stories that hit different" },
+    "Sci-Fi":      { emoji: "🚀", label: "Sci-Fi",      vibe: "The future, space, and beyond" },
+    "Thriller":    { emoji: "🎭", label: "Thriller",    vibe: "Edge-of-your-seat suspense" },
+    "Crime":       { emoji: "🔍", label: "Crime",       vibe: "Detectives, heists & dark secrets" },
+    "Documentary": { emoji: "🎙️", label: "Documentary", vibe: "True stories worth watching" },
+    "Animation":   { emoji: "🎨", label: "Animation",   vibe: "Art in motion" },
+    "Drama":       { emoji: "🎬", label: "Drama",       vibe: "Real emotions, real stories" },
+    "Fantasy":     { emoji: "✨", label: "Fantasy",     vibe: "Magic, myth & other worlds" },
+    "Adventure":   { emoji: "🗺️", label: "Adventure",   vibe: "Journey into the unknown" },
+    "Mystery":     { emoji: "🕵️", label: "Mystery",     vibe: "Questions that demand answers" },
+    "Family":      { emoji: "🏡", label: "Family",      vibe: "For everyone, young and old" },
+};
+
 router.get("/discover", async(req, res) => {
     const isGuest = !(req.session && req.session.userId);
     const api_key = process.env.TMDB_API_KEY;
@@ -304,6 +321,8 @@ router.get("/discover", async(req, res) => {
     const page = Number(req.query.page) || 1;
     const genreSearch = req.query.genres ? req.query.genres.split(",").map(g => g.trim()) : [];
     const langFilter = req.query.language || "en";
+    const primaryGenre = genreSearch[0] || "";
+    const mood = moodMeta[primaryGenre] || null;
 
     const textToGenreId = normalizedType === "tv" ? {
     "Action": 10759,  "Adventure": 10759,  "Animation": 16, 
@@ -348,7 +367,7 @@ router.get("/discover", async(req, res) => {
         <html>
             <head>
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Discover Results</title>
+                <title>${mood ? `${mood.emoji} ${mood.label} — SearchMovie` : 'Discover Results — SearchMovie'}</title>
                 <meta name="description" content="Search, discover, and track your favorite movies and TV shows. Find reviews and streaming providers with SearchMovie.">
                 
                 <meta property="og:title" content="SearchMovie - Movie & TV Discovery">
@@ -377,12 +396,20 @@ router.get("/discover", async(req, res) => {
             </head>
             <body>
                 <nav class="navbar2">
-                    <span class="nav-title2">Discovery Results</span>
+                    <span class="nav-title2">${mood ? `${mood.emoji} ${mood.label}` : 'Discovery Results'}</span>
                     <div class="nav-links2">
                         <a href="/" class="nav-item">Home</a>
                         <a href="/favorites" class="nav-item">Favorites</a>
                     </div>
                 </nav>
+                ${mood ? `
+                <div class="mood-banner">
+                    <div class="mood-banner-emoji">${mood.emoji}</div>
+                    <div class="mood-banner-text">
+                        <h1 class="mood-banner-title">${mood.label}</h1>
+                        <p class="mood-banner-vibe">${mood.vibe}</p>
+                    </div>
+                </div>` : ''}
                 <div class="movie-grid">`;
 
             if (movies.length === 0) {
