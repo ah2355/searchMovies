@@ -401,7 +401,7 @@ router.get("/privacy", (req, res) => {
             <div class="auth-wrapper" style="align-items:flex-start; margin-top:20px;">
                 <div id="loginContainer" style="max-width:700px; width:90%; text-align:left;">
                     <h2 style="text-align:center; font-size:28px;">Privacy Policy</h2>
-                    <p style="color:#aaa; text-align:center; margin-bottom:25px;">Last updated: June 17, 2026</p>
+                    <p style="color:#aaa; text-align:center; margin-bottom:25px;">Last updated: July 14, 2026</p>
 
                     <h3 style="margin-top:20px;">1. Information We Collect</h3>
                     <p style="color:#ccc; line-height:1.7;">SearchMovie collects only the information necessary to provide our service:</p>
@@ -431,13 +431,27 @@ router.get("/privacy", (req, res) => {
                     <p style="color:#ccc; line-height:1.7;">We do not sell, share, or transfer your personal data to any third parties.</p>
                     
 
-                    <h3 style="margin-top:20px;">6. Cookies</h3>
+                    <h3 style="margin-top:20px;">6. Copyright &amp; DMCA</h3>
+                    <p style="color:#ccc; line-height:1.7;">SearchMovie does not host or distribute any copyrighted content. All media is streamed from independent third-party sources that are not under our control. We respect intellectual property rights and comply with the Digital Millennium Copyright Act (DMCA).</p>
+                    <p style="color:#ccc; line-height:1.7;">If you are a copyright holder and believe that content accessible through this site infringes your rights, please contact us at <a style="text-decoration:none; color:violet;" href="mailto:wolfro979@gmail.com">wolfro979@gmail.com</a> with the following information:</p>
+                    <ul style="color:#ccc; line-height:1.9; padding-left:20px;">
+                        <li>Identification of the copyrighted work you claim is being infringed</li>
+                        <li>The specific URL or link on our site pointing to the infringing content</li>
+                        <li>Your contact information</li>
+                        <li>A statement that you have a good faith belief the use is not authorised by the copyright owner</li>
+                    </ul>
+                    <p style="color:#ccc; line-height:1.7;">We will review valid DMCA requests and remove the relevant links promptly.</p>
+
+                    <h3 style="margin-top:20px;">7. Open Source</h3>
+                    <p style="color:#ccc; line-height:1.7;">The SearchMovie application code is open source. The open source license applies <strong>only to the source code</strong> of this application — it does not grant any rights to the movies, TV shows, anime, or other media content that may be accessible through the site. All media content remains the property of its respective copyright holders.</p>
+
+                    <h3 style="margin-top:20px;">8. Cookies</h3>
                     <p style="color:#ccc; line-height:1.7;">We use a session cookie to keep you logged in. No tracking or advertising cookies are used.</p>
 
-                    <h3 style="margin-top:20px;">7. Data Deletion</h3>
+                    <h3 style="margin-top:20px;">9. Data Deletion</h3>
                     <p style="color:#ccc; line-height:1.7;">You can delete your account and all associated data at any time from the account page. Once deleted, your username, favorites, watchlist, and watch progress are permanently removed and cannot be recovered.</p>
 
-                    <h3 style="margin-top:20px;">8. Contact</h3>
+                    <h3 style="margin-top:20px;">10. Contact</h3>
                     <p style="color:#ccc; line-height:1.7;">If you have questions about this privacy policy, contact us at <a style="text-decoration: none; color: violet;" href="mailto:wolfro979@gmail.com">wolfro979@gmail.com</a></p>
                 </div>
             </div>
