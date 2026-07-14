@@ -417,22 +417,28 @@ router.get("/privacy", (req, res) => {
                     <h3 style="margin-top:20px;">3. Data Storage</h3>
                     <p style="color:#ccc; line-height:1.7;">Your data is stored securely in our database. Passwords are hashed and never stored in plain text.</p>
 
-                    <h3 style="margin-top:20px;">4. Third-Party Services</h3>
-                    <p style="color:#ccc; line-height:1.7;">SearchMovie uses the following third-party APIs to provide media information:</p>
+                    <h3 style="margin-top:20px;">4. No Media Storage</h3>
+                    <p style="color:#ccc; line-height:1.7;">SearchMovie does <strong>not</strong> host, store, or distribute any movies, TV shows, anime, or other media files. We have no media content on our servers.</p>
+                    <p style="color:#ccc; line-height:1.7;">All video content streamed through this site is sourced entirely from independent third-party embedding services. We act only as an index that links to these external sources — similar to how a search engine links to external websites. We are not responsible for the content, availability, or legality of any media served by those third-party providers.</p>
+
+                    <h3 style="margin-top:20px;">5. Third-Party Services</h3>
+                    <p style="color:#ccc; line-height:1.7;">SearchMovie uses the following third-party services:</p>
                     <ul style="color:#ccc; line-height:1.9; padding-left:20px;">
-                        <li>TMDB (The Movie Database) for movie and TV show data</li>
-                        <li>AniList for anime-related data</li>
+                        <li>TMDB (The Movie Database) — movie and TV show metadata</li>
+                        <li>AniList — anime metadata</li>
+                        <li>Various third-party embed providers — video playback (we do not control or store this content)</li>
                     </ul>
                     <p style="color:#ccc; line-height:1.7;">We do not sell, share, or transfer your personal data to any third parties.</p>
+                    
 
-                    <h3 style="margin-top:20px;">5. Cookies</h3>
+                    <h3 style="margin-top:20px;">6. Cookies</h3>
                     <p style="color:#ccc; line-height:1.7;">We use a session cookie to keep you logged in. No tracking or advertising cookies are used.</p>
 
-                    <h3 style="margin-top:20px;">6. Data Deletion</h3>
+                    <h3 style="margin-top:20px;">7. Data Deletion</h3>
                     <p style="color:#ccc; line-height:1.7;">You can delete your account and all associated data at any time from the account page. Once deleted, your username, favorites, watchlist, and watch progress are permanently removed and cannot be recovered.</p>
 
-                    <h3 style="margin-top:20px;">7. Contact</h3>
-                    <p style="color:#ccc; line-height:1.7;">If you have questions about this privacy policy, contact us at afifiram@gmail.com.</p>
+                    <h3 style="margin-top:20px;">8. Contact</h3>
+                    <p style="color:#ccc; line-height:1.7;">If you have questions about this privacy policy, contact us at <a style="text-decoration: none; color: violet;" href="mailto:wolfro979@gmail.com">wolfro979@gmail.com</a></p>
                 </div>
             </div>
         </body>

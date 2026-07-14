@@ -12,7 +12,7 @@ function showModal(title, text, confirmLabel, onConfirm) {
             '<p class="modal-title">' + title + '</p>' +
             '<p class="modal-text">' + text + '</p>' +
             '<div class="modal-actions">' +
-                '<button class="modal-btn modal-btn-cancel" id="modalCancelBtn">Cancel</button>' +
+                '<button class="modal-btn modal-btn-cancel" id="modalCancelBtn">Maybe Later</button>' +
                 '<button class="modal-btn modal-btn-confirm" id="modalConfirmBtn">' + confirmLabel + '</button>' +
             '</div>' +
         '</div>';
