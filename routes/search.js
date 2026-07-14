@@ -367,7 +367,7 @@ router.get("/discover", async(req, res) => {
         <html>
             <head>
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>${mood ? `${mood.emoji} ${mood.label} — SearchMovie` : 'Discover Results — SearchMovie'}</title>
+                <title>${mood ? `${mood.label} — SearchMovie` : 'Discover — SearchMovie'}</title>
                 <meta name="description" content="Search, discover, and track your favorite movies and TV shows. Find reviews and streaming providers with SearchMovie.">
                 
                 <meta property="og:title" content="SearchMovie - Movie & TV Discovery">
@@ -396,7 +396,10 @@ router.get("/discover", async(req, res) => {
             </head>
             <body>
                 <nav class="navbar2">
-                    <span class="nav-title2">${mood ? `${mood.emoji} ${mood.label}` : 'Discovery Results'}</span>
+                    <span class="nav-title2">
+                        <a href="/" class="nav-back-btn"><i class="fa-solid fa-chevron-left"></i></a>
+                        SearchMovie
+                    </span>
                     <div class="nav-links2">
                         <a href="/" class="nav-item">Home</a>
                         <a href="/favorites" class="nav-item">Favorites</a>
@@ -410,7 +413,7 @@ router.get("/discover", async(req, res) => {
                         <p class="mood-banner-vibe">${mood.vibe}</p>
                     </div>
                 </div>` : ''}
-                <div class="movie-grid">`;
+                <div class="movie-grid${mood ? ' mood-grid' : ''}">`;
 
             if (movies.length === 0) {
                 html += ` 

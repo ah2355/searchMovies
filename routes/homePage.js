@@ -547,7 +547,6 @@ router.get('/', async (req,res) => {
                 <div class="popular-movie-card" tabindex="0" onclick="window.location.href='/media/tv/${air.id}'">
                     <div class="popular-poster-container">
                         <img class="popular-movie-img" src="${posterPath}" alt="${seriesTitle} poster">
-                        <span class="live-badge"><span class="live-dot"></span>LIVE</span>
                         <div class="play-overlay">
                             <div class="play-icon"><i class="fa-solid fa-play"></i></div>
                         </div>

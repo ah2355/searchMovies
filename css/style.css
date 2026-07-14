@@ -130,9 +130,9 @@ body{
 }
 
 .nav-item:hover {
-  background-color: rgba(255, 255, 255, 0.15); 
+  background-color: rgba(255, 255, 255, 0.15);
   border-radius: 5px;
-  color: rgb(223, 211, 39);
+  color: #e50914;
 }
 
 .hamburger {
@@ -743,7 +743,7 @@ html.tv-device .content-bg {
   row-gap: 35px;
   justify-content: center;
   padding: 40px;
-  margin-top: 30px;
+  margin-top: 60px;
 }
 
 .movie-card {
@@ -998,6 +998,7 @@ button{
 
 /* ── Mood banner (discover page) ─────────────────────── */
 .mood-banner {
+  margin-top: 60px;
   display: flex;
   align-items: center;
   gap: 20px;
@@ -1023,42 +1024,15 @@ button{
   margin: 0;
   font-style: italic;
 }
+.mood-grid { margin-top: 16px; }
+
 @media (max-width: 600px) {
-  .mood-banner { padding: 20px 16px 16px; gap: 14px; }
+  .mood-banner { padding: 20px 16px 16px; gap: 14px; margin-top: 56px; }
   .mood-banner-emoji { font-size: 40px; }
   .mood-banner-title { font-size: 22px; }
 }
 
 /* ── Live badge ──────────────────────────────────────── */
-.live-badge {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  background: #e50914;
-  color: white;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  padding: 3px 8px;
-  border-radius: 20px;
-  z-index: 3;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  pointer-events: none;
-}
-.live-dot {
-  width: 6px;
-  height: 6px;
-  background: white;
-  border-radius: 50%;
-  flex-shrink: 0;
-  animation: live-pulse 1.4s ease-in-out infinite;
-}
-@keyframes live-pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50%       { opacity: 0.35; transform: scale(0.65); }
-}
 
 /* ── Scroll reveal ───────────────────────────────────── */
 .section-hidden {
@@ -1137,6 +1111,15 @@ button{
  gap:20px;
 }
 
+.nav-back-btn {
+  color: rgba(255,255,255,0.6);
+  text-decoration: none;
+  margin-right: 10px;
+  font-size: 14px;
+  transition: color 0.2s;
+}
+.nav-back-btn:hover { color: #e50914; }
+
 .nav-item2 a{
   color: #ffffff;
   text-decoration: none;          
@@ -1147,9 +1130,9 @@ button{
 }
 
 .nav-item2 a:hover{
-  background-color: rgba(255, 255, 255, 0.15); 
+  background-color: rgba(255, 255, 255, 0.15);
   border-radius: 5px;
-  color: rgb(223, 211, 39);
+  color: #e50914;
 }
 
 #searchForm {
@@ -1215,9 +1198,9 @@ button{
 }
 
 .nav-item3 a:hover{
-  background-color: rgba(255, 255, 255, 0.15); 
+  background-color: rgba(255, 255, 255, 0.15);
   border-radius: 5px;
-  color: rgb(223, 211, 39);
+  color: #e50914;
 }
 
 #elemNav{
