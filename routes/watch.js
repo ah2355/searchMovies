@@ -176,8 +176,7 @@ router.get('/anime/:anilistId', async (req, res) => {
     })();
 
     function goBack() {
-        if (history.length > 1) history.back();
-        else window.location.href = '${backFallback}';
+        window.location.href = '${backFallback}';
     }
 
     function goFullscreen() {
@@ -373,11 +372,7 @@ ${type === 'tv' ? `
     }
 
     function goBack() {
-        if (history.length > 1) {
-            history.back();
-        } else {
-            window.location.href = '/media/${type}/${id}';
-        }
+        window.location.href = '/media/${type}/${id}';
     }
 
     function goFullscreen() {
