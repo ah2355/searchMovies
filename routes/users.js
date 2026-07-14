@@ -135,7 +135,7 @@ router.get("/login", (req,res) => {
                         <a href="/" class="nav-item"><i class="fa-solid fa-house"></i> Home</a>
                         <a href="#feature-heading" class="nav-item"><i class="fa-solid fa-wand-magic-sparkles"></i> Features</a>
                         <a href="#tools-heading" class="nav-item"><i class="fa-solid fa-screwdriver-wrench"></i> Tools Used</a>
-                        <a href="https://github.com/ahaque12-code/searchMovies" target="_blank" class="nav-item"><i class="fa-brands fa-github"></i> GitHub</a>
+                        <a href="https://github.com/ah2355/searchMovies" target="_blank" class="nav-item"><i class="fa-brands fa-github"></i> GitHub</a>
                         <a href="/users/privacy" class="nav-item"><i class="fa-solid fa-circle-info"></i> Privacy Notice</a>
 
                     </div>
