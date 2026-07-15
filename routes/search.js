@@ -110,7 +110,7 @@ router.get("/results", async (req, res) => {
         <html>
             <head>
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Result</title>
+                <title>Search Results — SearchMovie</title>
                 <meta name="description" content="Search, discover, and track your favorite movies and TV shows. Find reviews and streaming providers with SearchMovie.">
                 <meta property="og:title" content="SearchMovie - Movie & TV Discovery">
                 <meta property="og:description" content="Discover, search, and track your favorite movies and TV shows with real-time Rotten Tomatoes scores.">
@@ -146,6 +146,7 @@ router.get("/results", async (req, res) => {
                     </form>
                     </div>
                 </nav>
+                <h1 style="font-size: 30px; margin-top: 60px;">Search results for "${searchMovie.replace(/"/g, '&quot;')}"</h1>
                 <div class="movie-grid">
         `;
 
@@ -199,7 +200,14 @@ router.get("/results", async (req, res) => {
                     <h3>${movieTitle}</h3>
                     <p>Year: ${releaseYear || "N/A"}</p>
                     <p><strong>Genre:</strong> ${genreText}</p>
-                    <p><strong>Rating:</strong> ${rating}</p>
+                    <p>
+                        <div class="starrt-container">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="star">
+                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                <span style="font-size: 0.85rem;">${rating}</span>
+                            </svg>
+                        </div>
+                    </p>
 
                     <div class="movie-card-bottom-bar">
                         <p><strong>Type:</strong> ${displayType}</p>
@@ -463,7 +471,14 @@ router.get("/discover", async(req, res) => {
                         <h3>${movieTitle}</h3>
                         <p>Year: ${releaseYear || "N/A"}</p>
                         <p><strong>Genre:</strong> ${genreText}</p>
-                        <p><strong>Rating:</strong> ${rating}</p>
+                        <p>
+                            <div class="starrt-container">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="star">
+                                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                    <span style="font-size: 0.85rem;">${rating}</span>
+                                </svg>
+                            </div>
+                        </p>
                 
                        <div class="movie-card-bottom-bar">
                             <p><strong>Type:</strong> ${displayType}</p>

@@ -71,7 +71,7 @@ router.get("/my-watchlist", async (req, res) => {
                     btn.textContent = '✓ Watched';
                 } else {
                     btn.classList.remove('active');
-                    btn.textContent = '👁 Mark Watched';
+                    btn.textContent = 'Mark Watched';
                 }
             }
 

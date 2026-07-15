@@ -282,19 +282,23 @@ router.get('/', async (req,res) => {
                                                 </div>
                                                 <input type="text" name="year" id="yearRelease" placeholder="Year">
                                                 <select name="media" id="mediaSelect" class="enhance-select">
-                                                    <option value="multi">Type</option>
+                                                    <option value="multi">Movie & TV</option>
                                                     <option value="movie">Movie</option>
                                                     <option value="tv">TV</option>
                                                 </select>
                                                 <select name="language" id="langSelect" class="enhance-select">
                                                     <option value="">All Languages</option>
                                                     <option value="en">English</option>
-                                                    <option value="hi">Hindi</option>
-                                                    <option value="kn">Kannada</option>
                                                     <option value="es">Spanish</option>
                                                     <option value="fr">French</option>
                                                     <option value="bn">Bangla</option>
                                                     <option value="ko">Korean</option>
+                                                    <option value="zh">Chinese</option>
+                                                    <option value="ja">Japanese</option>
+                                                    <option value="hi">Hindi</option>
+                                                    <option value="ta">Tamil</option>
+                                                    <option value="te">Telugu</option>
+                                                    <option value="kn">Kannada</option>
                                                 </select>
                                                 <br><br>
                                             </div>
