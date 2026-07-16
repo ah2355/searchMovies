@@ -96,6 +96,7 @@ router.get("/anime", async (req, res) => {
             <script src="/misc/tvNav.js" defer></script>
             <script src="/misc/showModal.js"></script>
             <script src="/misc/customSelect.js" defer></script>
+            <script>(function(){var r=document.documentElement;var c=localStorage.getItem('settingsBgColor');if(c)r.style.setProperty('--sm-bg',c);var a=localStorage.getItem('settingsAccent');if(a)r.style.setProperty('--accent',a);})();</script>
         </head>
         <body>
             <nav class="navbar2">
@@ -323,6 +324,11 @@ router.get("/anime-go", async (req, res) => {
 router.get("/toggle-nsfw", (req, res) => {
     req.session.nsfw = !req.session.nsfw;
     res.redirect(req.get('referer') || '/');
+});
+
+router.post("/api/set-nsfw", (req, res) => {
+    req.session.nsfw = req.body.enabled === true || req.body.enabled === 'true';
+    res.json({ ok: true, nsfw: req.session.nsfw });
 });
 
 

@@ -21,6 +21,7 @@ router.get("/", async (req, res) => {
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
         <script src="/misc/tvNav.js" defer></script>
         <title>Favorite List</title>
+        <script>(function(){var r=document.documentElement;var c=localStorage.getItem('settingsBgColor');if(c)r.style.setProperty('--sm-bg',c);var a=localStorage.getItem('settingsAccent');if(a)r.style.setProperty('--accent',a);})();</script>
       </head>
       <body>
         <nav class="navbar3">

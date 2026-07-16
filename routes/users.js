@@ -498,6 +498,7 @@ router.get("/privacy", (req, res) => {
             <link rel="icon" type="image/x-icon" href="/images/icon.png">
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
             <title>Privacy Policy - SearchMovie</title>
+            <script>(function(){var r=document.documentElement;var c=localStorage.getItem('settingsBgColor');if(c)r.style.setProperty('--sm-bg',c);var a=localStorage.getItem('settingsAccent');if(a)r.style.setProperty('--accent',a);})();</script>
         </head>
         <body class="loginBody">
             <nav class="navbar">

@@ -36,6 +36,7 @@ app.use('/watchlist', requireAuth, require('./routes/watchlist'));
 app.use('/media', require('./routes/media'));
 app.use('/watch', require('./routes/watch'));
 app.use('/', require('./routes/homePage'));
+app.use('/', require('./routes/settings'));
 app.use('/', require('./routes/search'));
 app.use('/', require('./routes/airing'));
 app.use('/', require('./routes/anime'));

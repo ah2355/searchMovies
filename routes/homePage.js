@@ -208,6 +208,7 @@ router.get('/', async (req,res) => {
                 <script src="misc/genreFunc.js" defer></script>
                 <script src="/misc/tvNav.js" defer></script>
                 <script src="/misc/customSelect.js" defer></script>
+                <script>(function(){var r=document.documentElement;var c=localStorage.getItem('settingsBgColor');if(c)r.style.setProperty('--sm-bg',c);var a=localStorage.getItem('settingsAccent');if(a)r.style.setProperty('--accent',a);var s=localStorage.getItem('settingsCardSize');if(s){var sizes={compact:'120px',normal:'160px',large:'200px'};var h={compact:'180px',normal:'240px',large:'300px'};if(sizes[s]){r.style.setProperty('--card-w',sizes[s]);r.style.setProperty('--card-h',h[s]);}}})();</script>
             </head>
             <body>
             <div class="app-container">
@@ -246,7 +247,9 @@ router.get('/', async (req,res) => {
                                                 <a href="/discover?genres=Documentary"><i class="fa-solid fa-microphone"></i> Documentary</a>
                                             </div>
                                         </div>
-                                        ${authAction}
+                                        <a href="/settings" class="nav-item" title="Settings">
+                                            <i class="fa-solid fa-gear"></i> Settings
+                                        </a>
                                     </div>
                                 </nav>
                                 <div id="backdrop-slider"></div>
@@ -681,6 +684,7 @@ router.get('/', async (req,res) => {
             </div>
          </main>
         </div>
+
         <script>
             async function initBackdropSlider() {
                 try {
@@ -1075,6 +1079,7 @@ router.get('/', async (req,res) => {
                 document.querySelectorAll('.popular-movie-card').forEach(function(card) {
                     var ci = ++idx;
                     card.addEventListener('mouseenter', function() {
+                        if (localStorage.getItem('trailerOnHover') === 'false') return;
                         hoverTimers[ci] = setTimeout(async function() {
                             var oc = card.getAttribute('onclick') || '';
                             var ps = oc.split('/media/');
@@ -1090,6 +1095,22 @@ router.get('/', async (req,res) => {
                         clearTimeout(hoverTimers[ci]);
                         collapseCard(card);
                     });
+                });
+            })();
+
+
+            // Apply hidden sections on load
+            (function() {
+                function getSectionWrap(gridId) {
+                    var grid = document.getElementById(gridId);
+                    if (!grid) return null;
+                    var p = grid.parentElement;
+                    return (p && p.classList.contains('slider-container')) ? p : grid;
+                }
+                var hidden = JSON.parse(localStorage.getItem('hiddenSections') || '[]');
+                hidden.forEach(function(sectionKey) {
+                    var el = getSectionWrap(sectionKey);
+                    if (el) el.style.display = 'none';
                 });
             })();
 

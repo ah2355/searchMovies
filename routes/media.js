@@ -657,6 +657,7 @@ router.get("/:type/:id", async (req, res) => {
                     <script src="/misc/showModal.js"></script>
                     <script src="/misc/tvNav.js" defer></script>
                     <script src="/misc/customSelect.js" defer></script>
+                    <script>(function(){var r=document.documentElement;var c=localStorage.getItem('settingsBgColor');if(c)r.style.setProperty('--sm-bg',c);var a=localStorage.getItem('settingsAccent');if(a)r.style.setProperty('--accent',a);})();</script>
                 </head>
                 <body>
                     <nav class="navbar">
