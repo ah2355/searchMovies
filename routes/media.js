@@ -502,8 +502,7 @@ router.get("/:type/:id", async (req, res) => {
                             </head>
                             <body class="restrict-body">
                                 <div class="restrict-container">
-                                    <h2 style="color: white; margin-top: 20px;">Content restricted — turn on the NSFW button on the anime page to view it.</h2>
-                                    <a href="/anime"><button id="animePageBtn">Go To Anime Page</button></a>
+                                    <h2 style="color: white; margin-top: 20px;">Content restricted — go to <a href="/settings#content" style="color:#e50914;">Settings → Content Preferences</a> and turn off Safe Search to view it.</h2>
                                 </div>
                             </body>
                         </html>

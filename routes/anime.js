@@ -9,7 +9,7 @@ router.get("/anime", async (req, res) => {
     const filter = req.query.filter || 'popular';
     const perPage = 20;
     const genre = req.query.genre || '';
-    const allowAdult = req.session.nsfw === true || req.query.nsfw === 'true';
+    const allowAdult = req.session.nsfw === true;
     const view = req.query.view === 'schedule' ? 'schedule' : 'grid';
 
     const sortMap = {
@@ -104,16 +104,13 @@ router.get("/anime", async (req, res) => {
                 <div class="nav-links2">
                     <a href="/" class="nav-item">Home</a>
                     <a href="/favorites" class="nav-item">Favorites</a>
-                    <a href="/toggle-nsfw" class="nav-item nsfw-btn" style="border:1px solid ${req.session.nsfw ? '#e50914' : '#555'}; border-radius: 15px"> 
-                        🔞 NSFW ${req.session.nsfw ? 'ON' : 'OFF'}
-                    </a>
                 </div>
             </nav>
             
             <div id="anime-choice-bar">
                 <div id="choice-barBtn">
                     ${filters.map(f => `
-                        <a href="/anime?filter=${f.id}${safeGenre ? '&genre=' + encodeURIComponent(safeGenre) : ''}${allowAdult ? '&nsfw=true' : ''}"
+                        <a href="/anime?filter=${f.id}${safeGenre ? '&genre=' + encodeURIComponent(safeGenre) : ''}"
                         style="background:${filter === f.id ? '#e50914' : '#2a2a2a'};">
                         ${f.label}
                     </a>`).join('')}
@@ -121,7 +118,7 @@ router.get("/anime", async (req, res) => {
 
                 <div id="filterBox">
                     <i class="fa-solid fa-sliders" style="color:#aaa;"></i>
-                    <select id="filterBtn" class="enhance-select" onchange="window.location.href='/anime?filter=${filter}${allowAdult ? '&nsfw=true' : ''}' + (this.value ? '&genre=' + encodeURIComponent(this.value) : '')">
+                    <select id="filterBtn" class="enhance-select" onchange="window.location.href='/anime?filter=${filter}' + (this.value ? '&genre=' + encodeURIComponent(this.value) : '')">
                         <option value="">Filter Genres</option>
                         ${genres.map(g => `<option value="${g}" ${safeGenre === g ? 'selected' : ''}>${g}</option>`).join('')}
                     </select>
@@ -130,11 +127,11 @@ router.get("/anime", async (req, res) => {
 
             ${isAiring ? `
                 <div id="viewOption-box">
-                    <a href="/anime?filter=airing&view=grid&page=${page}${safeGenre ? '&genre=' + encodeURIComponent(safeGenre) : ''}${allowAdult ? '&nsfw=true' : ''}"
+                    <a href="/anime?filter=airing&view=grid&page=${page}${safeGenre ? '&genre=' + encodeURIComponent(safeGenre) : ''}"
                     style="background:${view === 'grid' ? '#e50914' : '#2a2a2a'}; color:white; padding:8px 14px; border-radius:8px; text-decoration:none; font-size:13px;">
                     <i class="fa-solid fa-grip"></i> Grid View
                     </a>
-                    <a href="/anime?filter=airing&view=schedule&page=${page}${safeGenre ? '&genre=' + encodeURIComponent(safeGenre) : ''}${allowAdult ? '&nsfw=true' : ''}"
+                    <a href="/anime?filter=airing&view=schedule&page=${page}${safeGenre ? '&genre=' + encodeURIComponent(safeGenre) : ''}"
                     style="background:${view === 'schedule' ? '#e50914' : '#2a2a2a'}; color:white; padding:8px 14px; border-radius:8px; text-decoration:none; font-size:13px;">
                     <i class="fa-solid fa-calendar-days"></i> Schedule View
                     </a>
@@ -237,9 +234,9 @@ router.get("/anime", async (req, res) => {
 
     html += `
     <div id="cntrl-btn">
-        ${page > 1 ? `<a href="/anime?filter=${filter}&page=${page - 1}${safeGenre ? '&genre=' + encodeURIComponent(safeGenre) : ''}${allowAdult ? '&nsfw=true' : ''}${isAiring ? '&view=' + view : ''}" id="showLess">Previous</a>` : ''}
+        ${page > 1 ? `<a href="/anime?filter=${filter}&page=${page - 1}${safeGenre ? '&genre=' + encodeURIComponent(safeGenre) : ''}${isAiring ? '&view=' + view : ''}" id="showLess">Previous</a>` : ''}
         <span id="txtPage">Page ${page} of ${totalPages}</span>
-        ${pageInfo.hasNextPage ? `<a href="/anime?filter=${filter}&page=${page + 1}${safeGenre ? '&genre=' + encodeURIComponent(safeGenre) : ''}${allowAdult ? '&nsfw=true' : ''}${isAiring ? '&view=' + view : ''}" id="showMore">Next</a>` : ''}
+        ${pageInfo.hasNextPage ? `<a href="/anime?filter=${filter}&page=${page + 1}${safeGenre ? '&genre=' + encodeURIComponent(safeGenre) : ''}${isAiring ? '&view=' + view : ''}" id="showMore">Next</a>` : ''}
     </div>
     <script>
         const isGuest = ${isGuest};
@@ -311,9 +308,8 @@ router.get("/anime-go", async (req, res) => {
         }
  
         if (hit) {
-            const nsfwFlag = req.session.nsfw ? 'nsfw=true' : '';
-            const params = [aniId ? 'aniId=' + aniId : '', nsfwFlag].filter(Boolean).join('&');
-            return res.redirect(`/media/${mediaType}/${hit.id}${params ? '?' + params : ''}`);
+            const params = aniId ? '?aniId=' + aniId : '';
+            return res.redirect(`/media/${mediaType}/${hit.id}${params}`);
         }
         return res.redirect(`/results?q=${encodeURIComponent(rawTitle)}`);
     } catch (err) {
