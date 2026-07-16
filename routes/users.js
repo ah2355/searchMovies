@@ -4,6 +4,25 @@ const User = require("../models/User");
 const Favorite = require("../models/Favorite");
 const Watchlist = require("../models/Watchlist");
 const WatchProgress = require("../models/WatchProgress");
+const { OAuth2Client } = require('google-auth-library');
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+async function findOrCreateOAuthUser(field, id, email, name) {
+    let user = await User.findOne({ [field]: id });
+    if (!user && email) user = await User.findOne({ username: email });
+    if (!user) {
+        const base = (name || email || id).replace(/[^a-zA-Z0-9._]/g, '').slice(0, 30) || 'user';
+        let username = email || base;
+        const taken = await User.findOne({ username });
+        if (taken) username = base + '_' + Date.now().toString(36);
+        user = new User({ username, [field]: id, provider: field.replace('Id', '') });
+    } else if (!user[field]) {
+        user[field] = id;
+    }
+    await user.save();
+    return user;
+}
 
 router.get("/login", async (req, res) => {
     if (req.session && req.session.userId) {
@@ -217,6 +236,7 @@ router.get("/login", async (req, res) => {
                             <h1>SearchMovies</h1>
                         </div>
                         <h2 style="margin-top:18px;">Sign in</h2>
+
                         <form action="/users/login" id="loginForm" method="post">
                             <div class="input-group">
                                 <label class="input-label" for="userName">Username or Email</label>
@@ -233,7 +253,14 @@ router.get("/login", async (req, res) => {
                             </div>
                             <input type="submit" id="submit" value="Sign In">
                         </form>
+
+                        <div class="oauth-divider"><span>or</span></div>
+                        <div class="oauth-btns">
+                            <div id="google-btn-container" class="oauth-google-wrap"></div>
+                        </div>
+
                         <p style="margin-top:20px; text-align:center; color:rgba(255,255,255,0.6);">Don't have an account? <a href="/users/register" id="hereBtn">Create one</a></p>
+                        <script src="https://accounts.google.com/gsi/client" async defer></script>
                         <script>
                             function togglePw() {
                                 var pw = document.getElementById('password');
@@ -241,6 +268,31 @@ router.get("/login", async (req, res) => {
                                 if (pw.type === 'password') { pw.type = 'text'; eye.className = 'fa-solid fa-eye-slash'; }
                                 else { pw.type = 'password'; eye.className = 'fa-solid fa-eye'; }
                             }
+                            function handleGoogleCredential(response) {
+                                fetch('/users/auth/google', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ credential: response.credential })
+                                }).then(function(r) { return r.json(); }).then(function(d) {
+                                    if (d.ok) window.location.href = '/';
+                                    else alert('Google sign-in failed. Please try again.');
+                                });
+                            }
+                            (function initGoogle() {
+                                if (typeof google !== 'undefined' && google.accounts) {
+                                    google.accounts.id.initialize({
+                                        client_id: '${process.env.GOOGLE_CLIENT_ID || ""}',
+                                        callback: handleGoogleCredential,
+                                        auto_select: false
+                                    });
+                                    google.accounts.id.renderButton(
+                                        document.getElementById('google-btn-container'),
+                                        { theme: 'outline', size: 'large', width: 300, text: 'continue_with', shape: 'rectangular', logo_alignment: 'left' }
+                                    );
+                                } else {
+                                    setTimeout(initGoogle, 100);
+                                }
+                            })();
                         </script>
                     </div>
                 </div>
@@ -401,6 +453,7 @@ router.get("/register", (req, res) => {
                             <h1>SearchMovies</h1>
                         </div>
                         <h2 style="margin-top:18px;">Create Account</h2>
+
                         <form action="/users/register" method="post" id="loginForm">
                             <div class="input-group">
                                 <label class="input-label" for="userName">Username or Email</label>
@@ -417,9 +470,16 @@ router.get("/register", (req, res) => {
                             </div>
                             <input type="submit" id="submitAccnt" value="Create Account">
                         </form>
+
+                        <div class="oauth-divider"><span>or</span></div>
+                        <div class="oauth-btns">
+                            <div id="google-btn-container" class="oauth-google-wrap"></div>
+                        </div>
+
                         <p style="margin-top:20px; text-align:center; color:rgba(255,255,255,0.6);">
                             Already have an account? <a href="/users/login" id="hereBtn">Sign in</a>
                         </p>
+                        <script src="https://accounts.google.com/gsi/client" async defer></script>
                         <script>
                             function togglePw() {
                                 var pw = document.getElementById('password');
@@ -427,6 +487,31 @@ router.get("/register", (req, res) => {
                                 if (pw.type === 'password') { pw.type = 'text'; eye.className = 'fa-solid fa-eye-slash'; }
                                 else { pw.type = 'password'; eye.className = 'fa-solid fa-eye'; }
                             }
+                            function handleGoogleCredential(response) {
+                                fetch('/users/auth/google', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ credential: response.credential })
+                                }).then(function(r) { return r.json(); }).then(function(d) {
+                                    if (d.ok) window.location.href = '/';
+                                    else alert('Google sign-in failed. Please try again.');
+                                });
+                            }
+                            (function initGoogle() {
+                                if (typeof google !== 'undefined' && google.accounts) {
+                                    google.accounts.id.initialize({
+                                        client_id: '${process.env.GOOGLE_CLIENT_ID || ""}',
+                                        callback: handleGoogleCredential,
+                                        auto_select: false
+                                    });
+                                    google.accounts.id.renderButton(
+                                        document.getElementById('google-btn-container'),
+                                        { theme: 'outline', size: 'large', width: 300, text: 'continue_with', shape: 'rectangular', logo_alignment: 'left' }
+                                    );
+                                } else {
+                                    setTimeout(initGoogle, 100);
+                                }
+                            })();
                         </script>
                     </div>
                 </div>
@@ -448,6 +533,25 @@ router.post("/register", async (req,res) =>{
         res.status(500).send("Error creating account.");
     }
 })
+
+router.post("/auth/google", async (req, res) => {
+    const { credential } = req.body;
+    if (!credential) return res.status(400).json({ error: 'Missing credential' });
+    try {
+        const ticket = await googleClient.verifyIdToken({
+            idToken: credential,
+            audience: process.env.GOOGLE_CLIENT_ID,
+        });
+        const { sub, email, name } = ticket.getPayload();
+        const user = await findOrCreateOAuthUser('googleId', sub, email, name);
+        req.session.userId = user._id.toString();
+        req.session.username = user.username;
+        res.json({ ok: true });
+    } catch (err) {
+        console.error('Google auth error:', err.message);
+        res.status(401).json({ error: 'Google verification failed' });
+    }
+});
 
 router.post("/logout", (req, res) => {
     if (req.session) {

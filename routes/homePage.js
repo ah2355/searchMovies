@@ -13,65 +13,91 @@ let airingAnimeCacheTime = 0;
 const ANIME_ROW_CACHE_MS = 1000 * 60 * 10;
 const ANIME_CACHE_MS = 1000 * 60 * 30;
 
+// TMDB home page cache — stale-while-revalidate
+const TMDB_CACHE_MS = 1000 * 60 * 5;
+let tmdbCache = null;
+let tmdbCacheTime = 0;
+let tmdbFetchPromise = null; // shared promise prevents duplicate in-flight fetches
+
+const safeJson = r => r.ok ? r.json().catch(() => ({ results: [] })) : Promise.resolve({ results: [] });
+
+const EMPTY_TMDB = {
+    moviesData: { results: [] }, seriesData: { results: [] },
+    trendingData: { results: [] }, airingData: { results: [] },
+    animePopular: { results: [] }, animeClassic: { results: [] }
+};
+
+async function refreshTmdbCache(api_key) {
+    if (tmdbFetchPromise) return tmdbFetchPromise; // join the in-flight fetch
+    tmdbFetchPromise = (async () => {
+        try {
+            const [moviesData, seriesData, trendingData, airingData, animePopular, animeClassic] = await Promise.all([
+                fetch(`https://api.themoviedb.org/3/movie/popular?api_key=${api_key}&language=en-US&page=1`).then(safeJson),
+                fetch(`https://api.themoviedb.org/3/tv/popular?api_key=${api_key}&language=en-US&page=1`).then(safeJson),
+                fetch(`https://api.themoviedb.org/3/trending/all/day?api_key=${api_key}&language=en-US&page=1`).then(safeJson),
+                fetch(`https://api.themoviedb.org/3/tv/airing_today?api_key=${api_key}`).then(safeJson),
+                fetch(`https://api.themoviedb.org/3/discover/tv?api_key=${api_key}&with_genres=16&with_original_language=ja&sort_by=popularity.desc&page=1`).then(safeJson),
+                fetch(`https://api.themoviedb.org/3/discover/tv?api_key=${api_key}&with_genres=16&with_original_language=ja&sort_by=vote_count.desc&page=1`).then(safeJson),
+            ]);
+            tmdbCache = { moviesData, seriesData, trendingData, airingData, animePopular, animeClassic };
+            tmdbCacheTime = Date.now();
+        } catch (e) {
+            console.log('TMDB refresh failed:', e.message);
+        } finally {
+            tmdbFetchPromise = null;
+        }
+    })();
+    return tmdbFetchPromise;
+}
+
+async function fetchTmdbHome(api_key) {
+    const expired = Date.now() - tmdbCacheTime > TMDB_CACHE_MS;
+    if (tmdbCache && expired) refreshTmdbCache(api_key); // background refresh, don't await
+    if (tmdbCache) return tmdbCache;                     // serve stale instantly
+    await refreshTmdbCache(api_key);                    // first load: join in-flight or start fresh
+    return tmdbCache || EMPTY_TMDB;                     // safe fallback if TMDB is down
+}
+
+async function warmCache() {
+    const api_key = process.env.TMDB_API_KEY;
+    if (!api_key) return;
+    try { await fetchTmdbHome(api_key); } catch {}
+    try {
+        const { anilistQuery: aq } = require('../misc/anilist');
+        await Promise.all([
+            aq('query{Page(page:1,perPage:20){media(type:ANIME,sort:TRENDING_DESC,format_in:[TV,TV_SHORT],isAdult:false){id title{romaji english}coverImage{large}averageScore startDate{year}}}}'),
+            aq('query{Page(page:1,perPage:20){media(type:ANIME,status:RELEASING,sort:POPULARITY_DESC,isAdult:false){id idMal title{romaji english}coverImage{large}averageScore nextAiringEpisode{episode timeUntilAiring}}}}'),
+        ]);
+    } catch {}
+}
+
+// Pre-warm on startup, then refresh every 4.5 minutes (before 5-min TMDB cache expires)
+setTimeout(warmCache, 2000);
+setInterval(warmCache, 1000 * 60 * 4.5);
+
 router.get('/', async (req,res) => {
     const isGuest = !(req.session && req.session.userId);
     const username = isGuest ? "Guest" : req.session.username;
-    let displayName = (username !== "Guest" && username.includes('@')) 
-        ? username.split('@')[0] 
+    let displayName = (username !== "Guest" && username.includes('@'))
+        ? username.split('@')[0]
         : username;
     displayName = displayName.charAt(0).toUpperCase() + displayName.substring(1);
-    
+
     const authAction = isGuest
         ? `<a href="/users/login" class="nav-item" id="login-link"><i class="fa-solid fa-arrow-right-to-bracket"></i> Log In</a>`
         : `<a href="/users/login" class="nav-item"><i class="fa-solid fa-user"></i> Account</a>`;
-    
+
     const api_key = process.env.TMDB_API_KEY;
     const page = Number(req.query.page) || 1;
-    const [moviesData, seriesData, trendingData, airingData, animePopular, animeClassic] = await Promise.all([
-        fetch(`https://api.themoviedb.org/3/movie/popular?api_key=${api_key}&language=en-US&page=1`).then(r => r.json()),
-        fetch(`https://api.themoviedb.org/3/tv/popular?api_key=${api_key}&language=en-US&page=1`).then(r => r.json()),
-        fetch(`https://api.themoviedb.org/3/trending/all/day?api_key=${api_key}&language=en-US&page=1`).then(r => r.json()),
-        fetch(`https://api.themoviedb.org/3/tv/airing_today?api_key=${api_key}`).then(r => r.json()),
-        fetch(`https://api.themoviedb.org/3/discover/tv?api_key=${api_key}&with_genres=16&with_original_language=ja&sort_by=popularity.desc&page=1`).then(r => r.json()),
-        fetch(`https://api.themoviedb.org/3/discover/tv?api_key=${api_key}&with_genres=16&with_original_language=ja&sort_by=vote_count.desc&page=1`).then(r => r.json()),
-    ]);
+    const { moviesData, seriesData, trendingData, airingData, animePopular, animeClassic } = await fetchTmdbHome(api_key);
 
   
-    let trendingAnime = [];
-    try {
-        const trendingQuery = `
-            query {
-                Page(page: 1, perPage: 20) {
-                    media(type: ANIME, sort: TRENDING_DESC, format_in: [TV, TV_SHORT], isAdult: ${req.session.nsfw ? 'true' : 'false'}) {
-                        id
-                        title { romaji english }
-                        coverImage { large }
-                        averageScore
-                        startDate { year }
-                    }
-                }
-            }
-        `;
-        const td = await anilistQuery(trendingQuery);
-        const fetched = td.data?.Page?.media || [];
-        if (fetched.length) {
-            trendingAnime = fetched;
-            trendingAnimeCache = fetched;          // remember last good
-            trendingAnimeCacheTime = Date.now();
-        } else if (Date.now() - trendingAnimeCacheTime < ANIME_ROW_CACHE_MS) {
-            trendingAnime = trendingAnimeCache;    // fall back to cache
-        }
-    } catch (err) {
-        console.log('Trending anime fetch failed:', err.message);
-        if (Date.now() - trendingAnimeCacheTime < ANIME_ROW_CACHE_MS) {
-            trendingAnime = trendingAnimeCache;    // fall back to cache on error
-        }
-    }
-       
-    
+    const isNsfw = req.session.nsfw ? 'true' : 'false';
+    const adultKeywords = ['hentai', 'ero ', 'ecchi', 'overflow', 'kiss x sis', 'domestic na kanojo', 'yosuga', 'indoor', 'secret journey', 'peter grill', 'interspecies reviewers', 'sweet agony', 'sweet punishment', 'personal pet', 'guard\'s personal', 'fire in his fingertips', 'secret mission - undercover agents never back down!'];
+
+    // Build deduplicated anime list from TMDB for batch filtering
     const seen = new Set();
-    const adultKeywords = ['hentai', 'ero ', 'ecchi', 'overflow', 'kiss x sis', 'domestic na kanojo', 'yosuga', 'indoor', 'secret journey', 'peter grill', 'interspecies reviewers', 'sweet agony', 'sweet punishment', 'personal pet', 'guard\'s personal', 'fire in his fingertips', 'secret mission - undercover agents never back down!'];    
-    let animeResults = [...(animePopular.results || []), ...(animeClassic.results || [])]  
+    let animeResults = [...(animePopular.results || []), ...(animeClassic.results || [])]
         .filter(a => {
             if (seen.has(a.id)) return false;
             seen.add(a.id);
@@ -81,20 +107,61 @@ router.get('/', async (req,res) => {
             return true;
         });
 
-   
+    const trendingQuery = `query{Page(page:1,perPage:20){media(type:ANIME,sort:TRENDING_DESC,format_in:[TV,TV_SHORT],isAdult:${isNsfw}){id title{romaji english}coverImage{large}averageScore startDate{year}}}}`;
+    const airingQuery   = `query{Page(page:1,perPage:20){media(type:ANIME,status:RELEASING,sort:POPULARITY_DESC,isAdult:${isNsfw}){id idMal title{romaji english}coverImage{large}averageScore nextAiringEpisode{episode timeUntilAiring}}}}`;
+    const batchQuery = animeCacheData && (Date.now() - animeCacheTime < ANIME_CACHE_MS)
+        ? null
+        : `{${animeResults.map((a, i) => {
+            const safe = (a.name || a.original_name || '').replace(/[^a-zA-Z0-9 ]/g, '').trim().substring(0, 50);
+            return `a${i}:Media(search:"${safe}",type:ANIME){isAdult genres}`;
+        }).join('\n')}}`;
+
+    const recPromise = isGuest ? Promise.resolve(null) : WatchProgress.findOne({ user: req.session.userId }).sort({ updatedAt: -1 }).catch(() => null);
+
+    const [trendingAnimeRes, airingAnimeRes, batchRes, recentWatch] = await Promise.all([
+        anilistQuery(trendingQuery).catch(() => null),
+        anilistQuery(airingQuery).catch(() => null),
+        batchQuery ? anilistQuery(batchQuery).catch(() => null) : Promise.resolve(null),
+        recPromise,
+    ]);
+
+    // Process trending anime
+    let trendingAnime = [];
+    try {
+        const fetched = trendingAnimeRes?.data?.Page?.media || [];
+        if (fetched.length) {
+            trendingAnime = fetched;
+            trendingAnimeCache = fetched;
+            trendingAnimeCacheTime = Date.now();
+        } else if (Date.now() - trendingAnimeCacheTime < ANIME_ROW_CACHE_MS) {
+            trendingAnime = trendingAnimeCache;
+        }
+    } catch (err) {
+        if (Date.now() - trendingAnimeCacheTime < ANIME_ROW_CACHE_MS) trendingAnime = trendingAnimeCache;
+    }
+
+    // Process airing anime
+    let airingAnime = [];
+    try {
+        const fetched = airingAnimeRes?.data?.Page?.media || [];
+        if (fetched.length) {
+            airingAnime = fetched;
+            airingAnimeCache = fetched;
+            airingAnimeCacheTime = Date.now();
+        } else if (Date.now() - airingAnimeCacheTime < ANIME_ROW_CACHE_MS) {
+            airingAnime = airingAnimeCache;
+        }
+    } catch (err) {
+        if (Date.now() - airingAnimeCacheTime < ANIME_ROW_CACHE_MS) airingAnime = airingAnimeCache;
+    }
+
+    // Process batch anime filter
     if (animeCacheData && (Date.now() - animeCacheTime < ANIME_CACHE_MS)) {
         animeResults = animeCacheData;
-    } else {
-        const batchQuery = `{
-            ${animeResults.map((a, i) => {
-                const safe = (a.name || a.original_name || '').replace(/[^a-zA-Z0-9 ]/g, '').trim().substring(0, 50);
-                return `a${i}: Media(search: "${safe}", type: ANIME) { isAdult genres }`;
-            }).join('\n')}
-        }`;
+    } else if (batchRes) {
         try {
-            const d = await anilistQuery(batchQuery);
             animeResults = animeResults.filter((a, i) => {
-                const ani = d.data?.[`a${i}`];
+                const ani = batchRes.data?.[`a${i}`];
                 if (ani?.isAdult) return false;
                 if (ani?.genres?.some(g => g.toLowerCase() === 'hentai')) return false;
                 return true;
@@ -103,41 +170,9 @@ router.get('/', async (req,res) => {
             animeCacheTime = Date.now();
         } catch (err) {
             console.log('Home AniList batch failed:', err.message);
-            // fall back to unfiltered-by-anilist (keyword filter already applied if you keep it)
         }
     }
 
-    let airingAnime = [];
-    try {
-        const airingQuery = `
-            query {
-                Page(page: 1, perPage: 20) {
-                    media(type: ANIME, status: RELEASING, sort: POPULARITY_DESC, isAdult: ${req.session.nsfw ? 'true' : 'false'}) {
-                        id
-                        idMal
-                        title { romaji english }
-                        coverImage { large }
-                        averageScore
-                        nextAiringEpisode { episode timeUntilAiring }
-                    }
-                }
-            }
-        `;
-        const ad = await anilistQuery(airingQuery);
-        const fetched = ad.data?.Page?.media || [];
-        if (fetched.length) {
-            airingAnime = fetched;
-            airingAnimeCache = fetched;            // remember last good
-            airingAnimeCacheTime = Date.now();
-        } else if (Date.now() - airingAnimeCacheTime < ANIME_ROW_CACHE_MS) {
-            airingAnime = airingAnimeCache;        // fall back to cache
-        }
-    } catch (err) {
-        console.log('Airing anime fetch failed:', err.message);
-        if (Date.now() - airingAnimeCacheTime < ANIME_ROW_CACHE_MS) {
-            airingAnime = airingAnimeCache;        // fall back to cache on error
-        }
-    }
     const firstBackdrop = moviesData.results?.find(m => m.backdrop_path)?.backdrop_path;
 
     const featured = trendingData.results?.find(m => m.backdrop_path);
@@ -151,16 +186,12 @@ router.get('/', async (req,res) => {
 
     let recTitle = '';
     let recResults = [];
-    if (!isGuest) {
+    if (recentWatch) {
         try {
-            const recentWatch = await WatchProgress.findOne({ user: req.session.userId })
-                .sort({ updatedAt: -1 });
-            if (recentWatch) {
-                recTitle = recentWatch.title;
-                const recRes = await fetch(`https://api.themoviedb.org/3/${recentWatch.mediaType}/${recentWatch.mediaId}/recommendations?api_key=${api_key}&page=1`);
-                const recData = await recRes.json();
-                recResults = (recData.results || []).filter(r => r.poster_path).slice(0, 20);
-            }
+            recTitle = recentWatch.title;
+            const recRes = await fetch(`https://api.themoviedb.org/3/${recentWatch.mediaType}/${recentWatch.mediaId}/recommendations?api_key=${api_key}&page=1`);
+            const recData = await recRes.json();
+            recResults = (recData.results || []).filter(r => r.poster_path).slice(0, 20);
         } catch (err) {
             console.log('Recommendations fetch failed:', err.message);
         }
@@ -1182,15 +1213,18 @@ router.get('/api/card-trailer', async (req, res) => {
 });
 
 router.get('/api/backdrops', async (req, res) => {
-    const api_key = process.env.TMDB_API_KEY;
-    const apiRes = await fetch(`https://api.themoviedb.org/3/movie/popular?api_key=${api_key}&language=en-US&page=1`);
-    const data = await apiRes.json();
-    const backdrops = data.results
-        .filter(m => m.backdrop_path)
-        .slice(0, 10)
-        .map(m => ({ title: m.title, backdrop: m.backdrop_path }));
-
-    res.json(backdrops);
+    try {
+        const results = tmdbCache
+            ? (tmdbCache.moviesData.results || [])
+            : await fetch(`https://api.themoviedb.org/3/movie/popular?api_key=${process.env.TMDB_API_KEY}&language=en-US&page=1`).then(r => r.json()).then(d => d.results || []);
+        const backdrops = results
+            .filter(m => m.backdrop_path)
+            .slice(0, 10)
+            .map(m => ({ title: m.title, backdrop: m.backdrop_path }));
+        res.json(backdrops);
+    } catch {
+        res.json([]);
+    }
 });
 
 

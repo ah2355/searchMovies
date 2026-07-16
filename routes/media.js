@@ -8,6 +8,23 @@ const { fetchFavoritesFromDB, fetchWatchlistFromDB } = require("../misc/db.js");
 
 const genreMap = require('../misc/genreMap');
 
+// Fetch with a hard timeout — returns a safe empty-response object on timeout/error
+// so one slow TMDB endpoint never crashes the whole page
+function fetchT(url, ms = 12000) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), ms);
+    return fetch(url, {
+        signal: ctrl.signal,
+        headers: { Authorization: `Bearer ${process.env.TMDB_BEARER_TOKEN}` }
+    })
+        .catch(() => ({ ok: false, json: async () => ({}) }))
+        .finally(() => clearTimeout(timer));
+}
+
+// RT score cache — avoids launching Chrome on every media page load
+const RT_CACHE_MS = 1000 * 60 * 60; // 1 hour
+const rtCache = new Map(); // key: `${type}:${tmdbId}`, value: { score, time }
+
 async function tryScrape(title, type) {
     const normalizedTitle = title.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     const cleanTitle = normalizedTitle.toLowerCase()
@@ -78,10 +95,17 @@ async function getRottenTomatoesScore(title, type) {
     return await tryOMDB(title);
 }
 
+// Season chain cache — buildSeasonChain makes up to 24 sequential AniList calls,
+// which is expensive. Cache the final ordered list per anime ID for 6 hours.
+const seasonChainCache = new Map();
+const SEASON_CHAIN_CACHE_MS = 1000 * 60 * 60 * 6;
+
 // Walk AniList relations into the COMPLETE ordered TV season chain for an anime.
 // Used ONLY for season-navigation buttons — never for episode math — so it cannot
 // reintroduce the old numbering bugs. Single-entry shows (One Piece) return just themselves.
 async function buildSeasonChain(startId) {
+    const hit = seasonChainCache.get(startId);
+    if (hit && Date.now() - hit.time < SEASON_CHAIN_CACHE_MS) return hit.data;
     const Q = `query ($id: Int) {
         Media(id: $id, type: ANIME) {
             id format type
@@ -122,26 +146,29 @@ async function buildSeasonChain(startId) {
     const start = await fetchNode(startId);
     if (!start) return [];
 
-    const back = [];
-    let seen = new Set([startId]);
-    let cur = start;
-    for (let i = 0; i < 12; i++) {
-        const node = await followRelation(cur, 'PREQUEL', seen);
-        if (!node) break;
-        back.unshift(node);
-        cur = node;
+    // Walk prequel and sequel chains in parallel — each direction is still sequential
+    // (each hop depends on the previous), but the two directions don't depend on each other.
+    async function walkChain(startNode, rel, limit) {
+        const result = [];
+        const seen = new Set([startId]);
+        let cur = startNode;
+        for (let i = 0; i < limit; i++) {
+            const node = await followRelation(cur, rel, seen);
+            if (!node) break;
+            result.push(node);
+            cur = node;
+        }
+        return result;
     }
-    const fwd = [];
-    cur = start;
-    for (let i = 0; i < 12; i++) {
-        const node = await followRelation(cur, 'SEQUEL', seen);
-        if (!node) break;
-        fwd.push(node);
-        cur = node;
-    }
+
+    const [backRaw, fwd] = await Promise.all([
+        walkChain(start, 'PREQUEL', 12),
+        walkChain(start, 'SEQUEL', 12),
+    ]);
+    const back = backRaw.reverse();
     const ordered = [...back, start, ...fwd];
     const formatLabel = f => ({ TV: 'TV', TV_SHORT: 'TV Short', ONA: 'ONA', OVA: 'OVA' }[f] || f);
-    return ordered.map((n, idx) => ({
+    const data = ordered.map((n, idx) => ({
         id: n.id,
         seasonLabel: 'Season ' + (idx + 1),
         title: n.title?.english || n.title?.romaji || ('Season ' + (idx + 1)),
@@ -150,6 +177,8 @@ async function buildSeasonChain(startId) {
         format: formatLabel(n.format),
         current: n.id === startId
     }));
+    seasonChainCache.set(startId, { data, time: Date.now() });
+    return data;
 }
 
 router.get("/api/anime-episodes-tmdb", async (req, res) => {
@@ -211,9 +240,15 @@ router.get("/api/season", async (req, res) => {
 });
 
 router.get("/api/score", async (req, res) => {
-    const { title, type } = req.query;
+    const { title, type, id } = req.query;
+    const cacheKey = id ? `${type}:${id}` : `${type}:${title}`;
+    const cached = rtCache.get(cacheKey);
+    if (cached && Date.now() - cached.time < RT_CACHE_MS) {
+        return res.json({ score: cached.score });
+    }
     try {
         const score = await getRottenTomatoesScore(title, type);
+        rtCache.set(cacheKey, { score, time: Date.now() });
         res.json({ score });
     } catch (err) {
         res.json({ score: "N/A" });
@@ -300,19 +335,20 @@ router.get("/:type/:id", async (req, res) => {
 
     try {
         const [detailsRes, providersRes, videoRes, creditsRes, similarRes] = await Promise.all([
-            fetch(`https://api.themoviedb.org/3/${type}/${id}?api_key=${api_key}&language=en-US&append_to_response=external_ids`, { headers: { 'Authorization': `Bearer ${process.env.TMDB_BEARER_TOKEN}` } }),
-            fetch(`https://api.themoviedb.org/3/${type}/${id}/watch/providers?api_key=${api_key}&append_to_response=external_ids`, { headers: { 'Authorization': `Bearer ${process.env.TMDB_BEARER_TOKEN}` } }),
-            fetch(`https://api.themoviedb.org/3/${type}/${id}/videos?api_key=${api_key}`, { headers: { 'Authorization': `Bearer ${process.env.TMDB_BEARER_TOKEN}` } }),
-            fetch(`https://api.themoviedb.org/3/${type}/${id}/credits?api_key=${api_key}`, { headers: { 'Authorization': `Bearer ${process.env.TMDB_BEARER_TOKEN}` } }),
-            fetch(`https://api.themoviedb.org/3/${type}/${id}/recommendations?api_key=${api_key}&language=en-US&page=1`, { headers: { 'Authorization': `Bearer ${process.env.TMDB_BEARER_TOKEN}` } })
+            fetchT(`https://api.themoviedb.org/3/${type}/${id}?api_key=${api_key}&language=en-US&append_to_response=external_ids`),
+            fetchT(`https://api.themoviedb.org/3/${type}/${id}/watch/providers?api_key=${api_key}`),
+            fetchT(`https://api.themoviedb.org/3/${type}/${id}/videos?api_key=${api_key}`),
+            fetchT(`https://api.themoviedb.org/3/${type}/${id}/credits?api_key=${api_key}`),
+            fetchT(`https://api.themoviedb.org/3/${type}/${id}/recommendations?api_key=${api_key}&language=en-US&page=1`)
         ]);
 
-        const data = await detailsRes.json();
-        const providerData = await providersRes.json();
-        const videoData = await videoRes.json();
-        const creditsData = await creditsRes.json();
-        const similarData = await similarRes.json();
-        const trailer = videoData.results.find(v => v.type === "Trailer" && v.site === "YouTube");
+        const safeJson = r => r.ok ? r.json().catch(() => ({})) : Promise.resolve({});
+        const data = await safeJson(detailsRes);
+        const providerData = await safeJson(providersRes);
+        const videoData = await safeJson(videoRes);
+        const creditsData = await safeJson(creditsRes);
+        const similarData = await safeJson(similarRes);
+        const trailer = (videoData.results || []).find(v => v.type === "Trailer" && v.site === "YouTube");
 
         const cast = (creditsData.cast || []).slice(0, 12);
         const castHtml = cast.length ? cast.map(p => `
@@ -372,7 +408,10 @@ router.get("/:type/:id", async (req, res) => {
             : "<p>Not available to stream in your region.</p>";
 
         if (!detailsRes.ok) {
-            return res.status(detailsRes.status).send("<h2>Failed to fetch details from TMDB.</h2>");
+            return res.status(detailsRes.status || 503).send(`<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Error — SearchMovie</title>
+<style>body{background:#141414;color:#fff;font-family:sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;flex-direction:column;gap:16px}a{color:#e50914}</style>
+</head><body><h2>Couldn't load this title right now.</h2><p>TMDB took too long to respond. Try again in a moment, or <a href="/">go back home</a>.</p></body></html>`);
         }
 
         const searchSlug = title.toLowerCase().replace(/\s+/g, '-').replace(/(^-|-$)/g, '');
@@ -822,7 +861,7 @@ router.get("/:type/:id", async (req, res) => {
                     window.addEventListener('DOMContentLoaded', () => {
                         const title = '${escapedTitle}';
                         const type = '${type}';
-                        fetch('/media/api/score?title=' + encodeURIComponent(title) + '&type=' + type)
+                        fetch('/media/api/score?title=' + encodeURIComponent(title) + '&type=' + type + '&id=${id}')
                             .then(response => response.json())
                             .then(data => {
                                 document.getElementById('rt-score-display').innerText = data.score;
@@ -1457,6 +1496,15 @@ router.get("/:type/:id", async (req, res) => {
 
     } catch (err) {
         console.log("API ERROR: ", err);
+        if (!res.headersSent) {
+            res.status(500).send(`<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Error — SearchMovie</title>
+<style>body{background:#141414;color:#fff;font-family:sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;flex-direction:column;gap:16px}a{color:#e50914}</style>
+</head><body>
+<h2>Something went wrong loading this page.</h2>
+<p>Try refreshing, or <a href="/">go back home</a>.</p>
+</body></html>`);
+        }
     }
 });
 
