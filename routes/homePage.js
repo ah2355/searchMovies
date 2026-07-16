@@ -957,6 +957,142 @@ router.get('/', async (req,res) => {
                 } catch(e) {}
             })();
 
+            // Trailer: morph card to landscape on hover (desktop only)
+            (function() {
+                if (!window.matchMedia('(hover: hover)').matches) return;
+                var cache = {};
+                var hoverTimers = {};
+                var idx = 0;
+
+                function expandCard(card, key) {
+                    if (card.querySelector('.card-exp-frame')) return;
+                    var container = card.querySelector('.popular-poster-container');
+                    if (!container) return;
+                    card.classList.add('card-expanded');
+
+                    var frame = document.createElement('iframe');
+                    frame.className = 'card-exp-frame';
+                    frame.src = 'https://www.youtube-nocookie.com/embed/' + key
+                        + '?autoplay=1&mute=1&controls=0&loop=1&playlist=' + key
+                        + '&modestbranding=1&rel=0&showinfo=0&iv_load_policy=3&enablejsapi=1';
+                    frame.allow = 'autoplay; fullscreen';
+                    frame.setAttribute('allowfullscreen', '');
+                    container.appendChild(frame);
+
+                    var muteBtn = document.createElement('button');
+                    muteBtn.className = 'card-mute-btn';
+                    muteBtn.innerHTML = '&#128263;';
+                    muteBtn.title = 'Unmute';
+                    var muted = true;
+                    muteBtn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        muted = !muted;
+                        var cmd = muted ? 'mute' : 'unMute';
+                        frame.contentWindow.postMessage('{"event":"command","func":"' + cmd + '","args":""}', '*');
+                        muteBtn.innerHTML = muted ? '&#128263;' : '&#128266;';
+                        muteBtn.title = muted ? 'Unmute' : 'Mute';
+                    });
+                    container.appendChild(muteBtn);
+
+                    var maxBtn = document.createElement('button');
+                    maxBtn.className = 'card-max-btn';
+                    maxBtn.innerHTML = '&#x26F6;';
+                    maxBtn.title = 'Fullscreen';
+                    maxBtn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        if (frame.requestFullscreen) frame.requestFullscreen();
+                        else if (frame.webkitRequestFullscreen) frame.webkitRequestFullscreen();
+                    });
+                    container.appendChild(maxBtn);
+
+                    var qualityMenu = document.createElement('div');
+                    qualityMenu.className = 'card-quality-menu';
+                    var qualities = [
+                        {label: '1080p', val: 'hd1080'},
+                        {label: '720p',  val: 'hd720'},
+                        {label: '480p',  val: 'large'},
+                        {label: '360p',  val: 'medium'},
+                        {label: 'Auto',  val: 'default'}
+                    ];
+                    qualities.forEach(function(q) {
+                        var opt = document.createElement('button');
+                        opt.textContent = q.label;
+                        opt.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            frame.contentWindow.postMessage(
+                                '{"event":"command","func":"setPlaybackQuality","args":["' + q.val + '"]}', '*'
+                            );
+                            qualityBtn.textContent = q.label;
+                            qualityMenu.classList.remove('open');
+                        });
+                        qualityMenu.appendChild(opt);
+                    });
+                    container.appendChild(qualityMenu);
+
+                    var qualityBtn = document.createElement('button');
+                    qualityBtn.className = 'card-quality-btn';
+                    qualityBtn.textContent = 'HD';
+                    qualityBtn.title = 'Quality';
+                    qualityBtn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        qualityMenu.classList.toggle('open');
+                    });
+                    container.appendChild(qualityBtn);
+
+                    setTimeout(function() { frame.classList.add('ready'); }, 350);
+                }
+
+                function collapseCard(card) {
+                    card.classList.remove('card-expanded');
+                    var frame = card.querySelector('.card-exp-frame');
+                    if (frame) {
+                        frame.classList.remove('ready');
+                        setTimeout(function() {
+                            if (frame.parentNode) frame.parentNode.removeChild(frame);
+                        }, 350);
+                    }
+                    var muteBtn = card.querySelector('.card-mute-btn');
+                    if (muteBtn && muteBtn.parentNode) muteBtn.parentNode.removeChild(muteBtn);
+                    var maxBtn = card.querySelector('.card-max-btn');
+                    if (maxBtn && maxBtn.parentNode) maxBtn.parentNode.removeChild(maxBtn);
+                    var qualityBtn = card.querySelector('.card-quality-btn');
+                    if (qualityBtn && qualityBtn.parentNode) qualityBtn.parentNode.removeChild(qualityBtn);
+                    var qualityMenu = card.querySelector('.card-quality-menu');
+                    if (qualityMenu && qualityMenu.parentNode) qualityMenu.parentNode.removeChild(qualityMenu);
+                }
+
+                async function getKey(id, type) {
+                    var k = type + ':' + id;
+                    if (k in cache) return cache[k];
+                    try {
+                        var r = await fetch('/api/card-trailer?id=' + id + '&type=' + type);
+                        var d = await r.json();
+                        cache[k] = d.key || null;
+                    } catch(e) { cache[k] = null; }
+                    return cache[k];
+                }
+
+                document.querySelectorAll('.popular-movie-card').forEach(function(card) {
+                    var ci = ++idx;
+                    card.addEventListener('mouseenter', function() {
+                        hoverTimers[ci] = setTimeout(async function() {
+                            var oc = card.getAttribute('onclick') || '';
+                            var ps = oc.split('/media/');
+                            if (ps.length < 2) return;
+                            var sg = ps[1].split('/');
+                            var tp = sg[0], mid = (sg[1] || '').replace(/[^0-9]/g, '');
+                            if ((tp !== 'movie' && tp !== 'tv') || !mid) return;
+                            var key = await getKey(mid, tp);
+                            if (key && card.matches(':hover')) expandCard(card, key);
+                        }, 900);
+                    });
+                    card.addEventListener('mouseleave', function() {
+                        clearTimeout(hoverTimers[ci]);
+                        collapseCard(card);
+                    });
+                });
+            })();
+
             // Scroll reveal
             (function() {
                 var els = document.querySelectorAll('.section-hidden');
@@ -1008,6 +1144,20 @@ router.get('/api/search-suggest', async (req, res) => {
             }));
         res.json(items);
     } catch { res.json([]); }
+});
+
+router.get('/api/card-trailer', async (req, res) => {
+    const id = req.query.id;
+    const type = req.query.type === 'tv' ? 'tv' : 'movie';
+    if (!id || !/^\d+$/.test(id)) return res.json({ key: null });
+    const api_key = process.env.TMDB_API_KEY;
+    try {
+        const r = await fetch(`https://api.themoviedb.org/3/${type}/${id}/videos?api_key=${api_key}`);
+        const data = await r.json();
+        const trailer = (data.results || []).find(v => v.type === 'Trailer' && v.site === 'YouTube')
+            || (data.results || []).find(v => v.site === 'YouTube');
+        res.json({ key: trailer ? trailer.key : null });
+    } catch { res.json({ key: null }); }
 });
 
 router.get('/api/backdrops', async (req, res) => {
