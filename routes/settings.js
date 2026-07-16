@@ -1,5 +1,70 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
+
+router.get('/api/status', async (req, res) => {
+    const api_key = process.env.TMDB_API_KEY;
+
+    function fetchT(url, opts, ms) {
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), ms);
+        return fetch(url, { ...opts, signal: ctrl.signal })
+            .catch(() => ({ ok: false, status: 0 }))
+            .finally(() => clearTimeout(timer));
+    }
+
+    const results = {};
+
+    // MongoDB — synchronous state check
+    const rs = mongoose.connection.readyState;
+    results.mongodb = {
+        name: 'MongoDB',
+        status: rs === 1 ? 'ok' : rs === 2 ? 'slow' : 'down',
+        detail: rs === 1 ? 'Connected' : rs === 2 ? 'Connecting…' : 'Disconnected'
+    };
+
+    // Google OAuth — config check
+    results.google = {
+        name: 'Google OAuth',
+        status: process.env.GOOGLE_CLIENT_ID ? 'ok' : 'unconfigured',
+        detail: process.env.GOOGLE_CLIENT_ID ? 'Client ID configured' : 'GOOGLE_CLIENT_ID not set'
+    };
+
+    // OMDB — config check
+    results.omdb = {
+        name: 'OMDB (RT Scores)',
+        status: process.env.OMDB_API_KEY ? 'ok' : 'unconfigured',
+        detail: process.env.OMDB_API_KEY ? 'API key configured' : 'OMDB_API_KEY not set'
+    };
+
+    // TMDB and AniList — live pings in parallel
+    const [tmdbRes, anilistRes] = await Promise.allSettled([
+        (async () => {
+            if (!api_key) return { status: 'unconfigured', detail: 'TMDB_API_KEY not set' };
+            const t = Date.now();
+            const r = await fetchT(`https://api.themoviedb.org/3/configuration?api_key=${api_key}`, {}, 7000);
+            const ms = Date.now() - t;
+            if (!r.ok) return { status: 'down', detail: r.status ? `HTTP ${r.status}` : 'Timeout / unreachable' };
+            return { status: ms > 2500 ? 'slow' : 'ok', detail: `${ms}ms` };
+        })(),
+        (async () => {
+            const t = Date.now();
+            const r = await fetchT('https://graphql.anilist.co', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query: '{ Page(page:1,perPage:1) { media { id } } }' })
+            }, 6000);
+            const ms = Date.now() - t;
+            if (!r.ok) return { status: 'down', detail: r.status ? `HTTP ${r.status}` : 'Timeout / unreachable' };
+            return { status: ms > 2500 ? 'slow' : 'ok', detail: `${ms}ms` };
+        })()
+    ]);
+
+    results.tmdb    = { name: 'TMDB',    ...(tmdbRes.value    || { status: 'down', detail: 'Error' }) };
+    results.anilist = { name: 'AniList', ...(anilistRes.value || { status: 'down', detail: 'Error' }) };
+
+    res.json(results);
+});
 
 router.get('/settings', (req, res) => {
     const isGuest = !(req.session && req.session.userId);
@@ -28,10 +93,11 @@ router.get('/settings', (req, res) => {
 
     <div class="sp-layout">
         <aside class="sp-sidebar">
-            <a href="#account"    class="sp-sidelink active"><i class="fa-solid fa-user"></i> Account</a>
-            <a href="#appearance" class="sp-sidelink"><i class="fa-solid fa-palette"></i> Appearance</a>
-            <a href="#homepage"   class="sp-sidelink"><i class="fa-solid fa-house"></i> Home Page</a>
-            <a href="#content"    class="sp-sidelink"><i class="fa-solid fa-shield-halved"></i> Content</a>
+            <a href="#account"    class="sp-sidelink" data-tab="account"><i class="fa-solid fa-user"></i> Account</a>
+            <a href="#appearance" class="sp-sidelink" data-tab="appearance"><i class="fa-solid fa-palette"></i> Appearance</a>
+            <a href="#homepage"   class="sp-sidelink" data-tab="homepage"><i class="fa-solid fa-house"></i> Home Page</a>
+            <a href="#content"    class="sp-sidelink" data-tab="content"><i class="fa-solid fa-shield-halved"></i> Content</a>
+            <a href="#status"     class="sp-sidelink" data-tab="status"><i class="fa-solid fa-circle-check"></i> Service Status</a>
         </aside>
 
         <main class="sp-main">
@@ -193,6 +259,71 @@ router.get('/settings', (req, res) => {
                 </div>
             </section>
 
+            <!-- Service Status -->
+            <section class="sp-card" id="status">
+                <h2 class="sp-card-title">Service Status</h2>
+
+                <div class="svc-row" data-svc="tmdb">
+                    <div class="svc-left">
+                        <span class="svc-dot checking"></span>
+                        <div class="svc-info">
+                            <span class="svc-name">TMDB</span>
+                            <span class="svc-detail">Movie &amp; TV data</span>
+                        </div>
+                    </div>
+                    <span class="svc-badge checking">Checking…</span>
+                </div>
+
+                <div class="svc-row" data-svc="anilist">
+                    <div class="svc-left">
+                        <span class="svc-dot checking"></span>
+                        <div class="svc-info">
+                            <span class="svc-name">AniList</span>
+                            <span class="svc-detail">Anime data &amp; season chains</span>
+                        </div>
+                    </div>
+                    <span class="svc-badge checking">Checking…</span>
+                </div>
+
+                <div class="svc-row" data-svc="mongodb">
+                    <div class="svc-left">
+                        <span class="svc-dot checking"></span>
+                        <div class="svc-info">
+                            <span class="svc-name">Database</span>
+                            <span class="svc-detail">User accounts &amp; watchlists</span>
+                        </div>
+                    </div>
+                    <span class="svc-badge checking">Checking…</span>
+                </div>
+
+                <div class="svc-row" data-svc="google">
+                    <div class="svc-left">
+                        <span class="svc-dot checking"></span>
+                        <div class="svc-info">
+                            <span class="svc-name">Google OAuth</span>
+                            <span class="svc-detail">Sign in with Google</span>
+                        </div>
+                    </div>
+                    <span class="svc-badge checking">Checking…</span>
+                </div>
+
+                <div class="svc-row" data-svc="omdb">
+                    <div class="svc-left">
+                        <span class="svc-dot checking"></span>
+                        <div class="svc-info">
+                            <span class="svc-name">OMDB</span>
+                            <span class="svc-detail">Rotten Tomatoes scores</span>
+                        </div>
+                    </div>
+                    <span class="svc-badge checking">Checking…</span>
+                </div>
+
+                <div class="svc-footer">
+                    <span class="svc-last-checked" id="svc-last">Checking…</span>
+                    <button class="sp-text-btn" id="svc-refresh"><i class="fa-solid fa-rotate"></i> Refresh</button>
+                </div>
+            </section>
+
         </main>
     </div>
 
@@ -208,18 +339,26 @@ router.get('/settings', (req, res) => {
             setTimeout(function() { t.classList.remove('show'); }, 1800);
         }
 
-        // Sidebar active highlight on scroll
-        var sections = document.querySelectorAll('.sp-card');
-        var sideLinks = document.querySelectorAll('.sp-sidelink');
-        function onScroll() {
-            var scrollY = window.scrollY + 120;
-            var active = sections[0];
-            sections.forEach(function(s) { if (s.offsetTop <= scrollY) active = s; });
-            sideLinks.forEach(function(l) {
-                l.classList.toggle('active', l.getAttribute('href') === '#' + active.id);
+        // Tab switching
+        var sideLinks = document.querySelectorAll('.sp-sidelink[data-tab]');
+        function showTab(id) {
+            document.querySelectorAll('.sp-card').forEach(function(s) {
+                s.classList.toggle('sp-active', s.id === id);
             });
+            sideLinks.forEach(function(l) {
+                l.classList.toggle('active', l.getAttribute('data-tab') === id);
+            });
+            history.replaceState(null, '', '#' + id);
+            window.scrollTo(0, 0);
         }
-        window.addEventListener('scroll', onScroll, { passive: true });
+        sideLinks.forEach(function(l) {
+            l.addEventListener('click', function(e) {
+                e.preventDefault();
+                showTab(l.getAttribute('data-tab'));
+            });
+        });
+        var initial = (location.hash || '#account').slice(1);
+        showTab(document.getElementById(initial) ? initial : 'account');
 
         // Background swatches
         var savedBg = localStorage.getItem('settingsBgColor') || '#0d0d0d';
@@ -323,6 +462,49 @@ router.get('/settings', (req, res) => {
                 localStorage.setItem('hiddenSections', JSON.stringify(hidden));
                 toast('Saved');
             });
+        });
+
+        // Service status
+        var statusLabels = { ok: 'Operational', slow: 'Degraded', down: 'Down', unconfigured: 'Not Set', checking: 'Checking…' };
+        function loadStatus() {
+            document.querySelectorAll('.svc-row[data-svc]').forEach(function(row) {
+                row.querySelector('.svc-dot').className = 'svc-dot checking';
+                var badge = row.querySelector('.svc-badge');
+                badge.className = 'svc-badge checking';
+                badge.textContent = 'Checking…';
+            });
+            document.getElementById('svc-last').textContent = 'Checking…';
+
+            fetch('/api/status')
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    Object.keys(data).forEach(function(key) {
+                        var row = document.querySelector('.svc-row[data-svc="' + key + '"]');
+                        if (!row) return;
+                        var svc = data[key];
+                        var s = svc.status;
+                        row.querySelector('.svc-dot').className = 'svc-dot ' + s;
+                        var badge = row.querySelector('.svc-badge');
+                        badge.className = 'svc-badge ' + s;
+                        badge.textContent = statusLabels[s] || s;
+                        if (svc.detail) row.querySelector('.svc-detail').textContent = svc.detail;
+                    });
+                    document.getElementById('svc-last').textContent = 'Last checked: ' + new Date().toLocaleTimeString();
+                })
+                .catch(function() {
+                    document.getElementById('svc-last').textContent = 'Could not reach status endpoint';
+                });
+        }
+        var svcTimer = null;
+        function scheduleStatusRefresh() {
+            clearInterval(svcTimer);
+            svcTimer = setInterval(loadStatus, 30 * 60 * 1000);
+        }
+        loadStatus();
+        scheduleStatusRefresh();
+        document.getElementById('svc-refresh').addEventListener('click', function() {
+            loadStatus();
+            scheduleStatusRefresh();
         });
 
         // Content preferences
