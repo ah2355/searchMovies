@@ -39,9 +39,9 @@ body{
 }
 
 .nav-item:hover {
-  background-color: rgba(255, 255, 255, 0.15); 
+  background-color: rgba(255, 255, 255, 0.15);
   border-radius: 5px;
-  color: rgb(223, 211, 39);
+  color: #e50914;
 }
 
 .details-container {
@@ -80,6 +80,7 @@ body{
     display: flex;
     flex-direction: column;
     text-align: left;
+    margin-bottom: 10px;
 }
 
 .details-title {
@@ -671,6 +672,7 @@ html.tv-device #tv-fullscreen-btn {
 
 .secret-div{
     margin-top: 20px;
+    margin-bottom: 20px;
     font-size: 1.5rem;
 }
 
@@ -887,6 +889,7 @@ html.tv-device #tv-fullscreen-btn {
     .details-right {
         text-align: center;
         align-items: center;
+        margin-bottom: 10px;
     }
 
     .details-title {
@@ -1199,4 +1202,343 @@ select.enhance-select {
 .custom-select-option.selected {
   color: #e50914;
   font-weight: 600;
+}
+/* ── Cinematic hero ──────────────────────────────────── */
+.details-container {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: row;
+    max-width: 1100px;
+    width: 100%;
+    gap: 48px;
+    align-items: flex-end;
+    padding: 0 40px;
+    box-sizing: border-box;
+    padding-top: 20px;
+    padding-bottom: 20px;
+}
+
+.details-poster {
+    width: 240px;
+    flex-shrink: 0;
+    align-self: flex-start;
+    position: sticky;
+    top: 80px;
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+    display: block;
+    transition: transform 0.3s ease;
+    margin-bottom: 0;
+}
+.details-poster:hover { transform: scale(1.02); }
+
+.details-right {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    flex: 1;
+    min-width: 0;
+}
+
+.details-title {
+    font-size: clamp(1.6rem, 4vw, 2.8rem);
+    margin: 0;
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.5px;
+}
+
+.details-year { color: rgba(255,255,255,0.45); font-weight: 400; }
+
+.details-tagline {
+    color: rgba(255,255,255,0.5);
+    font-size: 0.95rem;
+    margin: 0;
+    font-style: italic;
+    min-height: 1em;
+}
+
+.details-overview {
+    font-size: 0.97rem;
+    line-height: 1.65;
+    color: rgba(255,255,255,0.8);
+    margin: 0;
+    max-width: 640px;
+}
+
+/* ── Stat pills ──────────────────────────────────────── */
+.stat-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+
+.stat-pill {
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.9);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+}
+
+.genre-pill {
+    background: rgba(229,9,20,0.15);
+    border: 1px solid rgba(229,9,20,0.3);
+    color: rgba(255,255,255,0.75);
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+}
+
+/* ── Action buttons ──────────────────────────────────── */
+.action-btns {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.btn-watch {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #e50914;
+    color: white;
+    font-weight: 700;
+    font-size: 0.95rem;
+    padding: 12px 28px;
+    border-radius: 50px;
+    text-decoration: none;
+    transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+    box-shadow: 0 4px 20px rgba(229,9,20,0.4);
+}
+.btn-watch:hover {
+    background: #ff1a27;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 28px rgba(229,9,20,0.55);
+}
+
+.btn-trailer {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: white;
+    font-weight: 600;
+    font-size: 0.95rem;
+    padding: 12px 24px;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+}
+.btn-trailer:hover {
+    background: rgba(255,255,255,0.18);
+    transform: translateY(-1px);
+}
+
+/* ── Streaming providers ─────────────────────────────── */
+.providers-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.providers-label {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.45);
+    margin-right: 2px;
+}
+.provider-logo {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    object-fit: cover;
+    transition: transform 0.15s;
+}
+.provider-logo:hover { transform: scale(1.1); }
+
+/* ── Media sections (cast / similar) ────────────────── */
+.media-section {
+    padding: 40px 40px 20px;
+    max-width: 1180px;
+    margin: 0 auto;
+}
+
+.section-heading {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: white;
+    margin: 0 0 20px;
+    padding-left: 14px;
+    border-left: 4px solid #e50914;
+}
+
+/* ── Cast row ────────────────────────────────────────── */
+.cast-row {
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    padding-bottom: 12px;
+    scrollbar-width: none;
+}
+.cast-row::-webkit-scrollbar { display: none; }
+
+.cast-card {
+    flex: 0 0 100px;
+    text-align: center;
+}
+.cast-photo {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(255,255,255,0.1);
+    margin-bottom: 8px;
+    transition: border-color 0.2s;
+}
+.cast-card:hover .cast-photo { border-color: #e50914; }
+.cast-name {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: white;
+    margin: 0 0 3px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.cast-char {
+    font-size: 0.72rem;
+    color: rgba(255,255,255,0.45);
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ── Similar row ─────────────────────────────────────── */
+.similar-row {
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    padding-bottom: 12px;
+    scrollbar-width: none;
+}
+.similar-row::-webkit-scrollbar { display: none; }
+
+.similar-card {
+    flex: 0 0 130px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+.similar-card:hover { transform: scale(1.04); }
+.similar-card img {
+    width: 130px;
+    height: 195px;
+    object-fit: cover;
+    border-radius: 8px;
+    display: block;
+    margin-bottom: 6px;
+}
+.similar-title {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: white;
+    margin: 0 0 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.similar-year {
+    font-size: 0.72rem;
+    color: rgba(255,255,255,0.4);
+    margin: 0;
+}
+
+/* ── Mobile ──────────────────────────────────────────── */
+@media (max-width: 700px) {
+    /* Hero */
+    .details-hero {
+        align-items: flex-start;
+        padding: 0;
+        min-height: unset;
+    }
+    .details-container {
+        flex-direction: column;
+        align-items: center;
+        padding: 16px 16px 32px;
+        gap: 20px;
+    }
+
+    /* Poster: centered, not sticky on mobile */
+    .details-poster {
+        width: 140px;
+        position: static;
+        align-self: center;
+        border-radius: 10px;
+        margin-top: 100px;
+    }
+
+    /* Text */
+    .details-right {
+        align-items: flex-start;
+        gap: 12px;
+        width: 100%;
+    }
+    .details-title {
+        font-size: 1.5rem;
+        margin: 0;
+    }
+    .details-tagline {
+        font-size: 0.85rem;
+    }
+    .details-overview {
+        font-size: 0.9rem;
+    }
+
+    /* Pills wrap neatly */
+    .stat-pills {
+        gap: 6px;
+    }
+    .stat-pill {
+        font-size: 0.76rem;
+        padding: 3px 10px;
+    }
+    .genre-pill {
+        font-size: 0.72rem;
+        padding: 3px 8px;
+    }
+
+    /* Buttons full-width */
+    .action-btns {
+        flex-direction: column;
+        width: 100%;
+    }
+    .btn-watch, .btn-trailer {
+        width: 100%;
+        justify-content: center;
+        padding: 13px 20px;
+        font-size: 0.9rem;
+    }
+
+    /* Providers */
+    .providers-row { gap: 8px; }
+    .provider-logo { width: 32px; height: 32px; }
+
+    /* Cast / Similar */
+    .media-section { padding: 24px 16px 10px; }
+    .section-heading { font-size: 1.1rem; }
+    .cast-photo { width: 64px; height: 64px; }
+    .cast-card { flex: 0 0 80px; }
+    .similar-card { flex: 0 0 110px; }
+    .similar-card img { width: 110px; height: 165px; }
 }

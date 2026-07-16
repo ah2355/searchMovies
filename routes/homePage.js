@@ -189,6 +189,8 @@ router.get('/', async (req,res) => {
                 <link rel="icon" type="image/png" href="https://searchmovie.win/images/icon.png">
                 <link rel="apple-touch-icon" href="https://searchmovie.win/images/icon.png">
                 <link rel="icon" type="image/x-icon" href="/images/icon.png">
+                <link rel="manifest" href="/manifest.json">
+                <meta name="theme-color" content="#e50914">
                 <link rel="stylesheet" href="/css/style.css">
                 <link rel="preconnect" href="https://image.tmdb.org">
                 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -352,6 +354,23 @@ router.get('/', async (req,res) => {
                                     <button type="button" class="slide-btn left" onclick="scrollGrid('cw-grid', -300)">❮</button>
                                     <div id="cw-grid" class="popular-movie-grid"></div>
                                     <button type="button" class="slide-btn right" onclick="scrollGrid('cw-grid', 300)">❯</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="recently-viewed-wrap" style="display:none;">
+                            <div id="popular-movie">
+                                <div class="slider-container">
+                                    <div class="rv-header">
+                                        <h2>Recently Viewed</h2>
+                                        <button type="button" id="rv-toggle-btn" class="rv-toggle-btn">Turn off</button>
+                                    </div>
+                                    <button type="button" class="slide-btn left" onclick="scrollGrid('rv-grid', -300)">❮</button>
+                                    <div id="rv-grid" class="rv-grid"></div>
+                                    <button type="button" class="slide-btn right" onclick="scrollGrid('rv-grid', 300)">❯</button>
+                                </div>
+                                <div id="rv-disabled-notice" style="display:none; padding: 12px 20px 20px;">
+                                    <span style="color:#555; font-size:13px;">Recently Viewed is turned off.</span>
+                                    <button type="button" id="rv-enable-btn" class="rv-toggle-btn" style="margin-left:12px;">Turn on</button>
                                 </div>
                             </div>
                         </div>`;
@@ -777,6 +796,167 @@ router.get('/', async (req,res) => {
 
             loadContinueWatching();
 
+            // Instant search suggestions
+            (function() {
+                var input = document.getElementById('movieName');
+                var box = document.getElementById('suggestionsBox');
+                if (!input || !box) return;
+                var timer, activeIdx = -1;
+
+                function hideSuggestions() {
+                    box.style.display = 'none';
+                    box.innerHTML = '';
+                    activeIdx = -1;
+                }
+
+                function showSuggestions(items) {
+                    if (!items.length) { hideSuggestions(); return; }
+                    box.innerHTML = items.map(function(item) {
+                        var img = item.poster
+                            ? '<img src="' + item.poster + '" alt="" class="suggestion-img">'
+                            : '<div class="suggestion-img suggestion-no-img"></div>';
+                        var year = item.year ? ' (' + item.year + ')' : '';
+                        var badge = item.type === 'movie' ? 'Movie' : 'TV';
+                        return '<div class="suggestion-item" data-href="/media/' + item.type + '/' + item.id + '">'
+                            + img
+                            + '<div class="suggestion-text">'
+                            + '<span class="suggestion-title">' + item.title.replace(/</g,'&lt;') + year + '</span>'
+                            + '<span class="suggestion-badge">' + badge + '</span>'
+                            + '</div></div>';
+                    }).join('');
+                    box.style.display = 'block';
+                    activeIdx = -1;
+                    box.querySelectorAll('.suggestion-item').forEach(function(el) {
+                        el.addEventListener('mousedown', function(e) {
+                            e.preventDefault();
+                            window.location.href = el.getAttribute('data-href');
+                        });
+                    });
+                }
+
+                input.addEventListener('input', function() {
+                    clearTimeout(timer);
+                    var q = input.value.trim();
+                    if (q.length < 2) { hideSuggestions(); return; }
+                    timer = setTimeout(async function() {
+                        try {
+                            var r = await fetch('/api/search-suggest?q=' + encodeURIComponent(q));
+                            showSuggestions(await r.json());
+                        } catch(e) {}
+                    }, 220);
+                });
+
+                input.addEventListener('keydown', function(e) {
+                    var items = box.querySelectorAll('.suggestion-item');
+                    if (!items.length) return;
+                    if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        activeIdx = Math.min(activeIdx + 1, items.length - 1);
+                        items.forEach(function(el, i) { el.classList.toggle('suggestion-active', i === activeIdx); });
+                    } else if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        activeIdx = Math.max(activeIdx - 1, -1);
+                        items.forEach(function(el, i) { el.classList.toggle('suggestion-active', i === activeIdx); });
+                    } else if (e.key === 'Enter' && activeIdx >= 0) {
+                        e.preventDefault();
+                        window.location.href = items[activeIdx].getAttribute('data-href');
+                    } else if (e.key === 'Escape') {
+                        hideSuggestions();
+                    }
+                });
+
+                document.addEventListener('click', function(e) {
+                    if (!box.contains(e.target) && e.target !== input) hideSuggestions();
+                });
+
+                input.addEventListener('focus', function() {
+                    if (input.value.trim().length >= 2 && !box.innerHTML) {
+                        input.dispatchEvent(new Event('input'));
+                    }
+                });
+            })();
+
+            // PWA service worker
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('/sw.js').catch(function(){});
+            }
+
+            // Recently Viewed row
+            (function() {
+                try {
+                    var wrap = document.getElementById('recently-viewed-wrap');
+                    var grid = document.getElementById('rv-grid');
+                    var toggleBtn = document.getElementById('rv-toggle-btn');
+                    var notice = document.getElementById('rv-disabled-notice');
+                    var enableBtn = document.getElementById('rv-enable-btn');
+                    if (!wrap || !grid) return;
+
+                    var enabled = localStorage.getItem('recentlyViewedEnabled') !== 'false';
+
+                    function renderGrid() {
+                        var items = JSON.parse(localStorage.getItem('recentlyViewed') || '[]');
+                        if (!items.length && enabled) return;
+                        wrap.style.display = 'block';
+                        if (!enabled) {
+                            grid.style.display = 'none';
+                            if (notice) notice.style.display = 'block';
+                            if (toggleBtn) toggleBtn.style.display = 'none';
+                            document.querySelectorAll('.slide-btn').forEach(function(b) {
+                                if (b.closest('#recently-viewed-wrap')) b.style.display = 'none';
+                            });
+                            return;
+                        }
+                        grid.innerHTML = items.map(function(it) {
+                            var imgSrc = it.poster || '/images/icon.png';
+                            var safetitle = (it.title || '').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+                            var href = '/media/' + it.type + '/' + it.id;
+                            return '<div class="rv-card" data-href="' + href + '">'
+                                + '<div class="rv-poster"><img src="' + imgSrc + '" alt="' + safetitle + '" loading="lazy"></div>'
+                                + '<div class="rv-info">'
+                                + '<p class="rv-card-title">' + safetitle + '</p>'
+                                + '<p class="rv-card-year">' + (it.year || '') + '</p>'
+                                + '</div>'
+                                + '</div>';
+                        }).join('');
+                        grid.querySelectorAll('.rv-card').forEach(function(card) {
+                            card.addEventListener('click', function() {
+                                window.location.href = card.getAttribute('data-href');
+                            });
+                        });
+                        wrap.style.display = 'block';
+                    }
+
+                    renderGrid();
+
+                    if (toggleBtn) {
+                        toggleBtn.addEventListener('click', function() {
+                            localStorage.setItem('recentlyViewedEnabled', 'false');
+                            enabled = false;
+                            grid.style.display = 'none';
+                            if (notice) notice.style.display = 'block';
+                            toggleBtn.style.display = 'none';
+                            document.querySelectorAll('.slide-btn').forEach(function(b) {
+                                if (b.closest('#recently-viewed-wrap')) b.style.display = 'none';
+                            });
+                        });
+                    }
+
+                    if (enableBtn) {
+                        enableBtn.addEventListener('click', function() {
+                            localStorage.setItem('recentlyViewedEnabled', 'true');
+                            enabled = true;
+                            if (notice) notice.style.display = 'none';
+                            if (toggleBtn) toggleBtn.style.display = '';
+                            grid.style.display = '';
+                            document.querySelectorAll('.slide-btn').forEach(function(b) {
+                                if (b.closest('#recently-viewed-wrap')) b.style.display = '';
+                            });
+                            renderGrid();
+                        });
+                    }
+                } catch(e) {}
+            })();
+
             // Scroll reveal
             (function() {
                 var els = document.querySelectorAll('.section-hidden');
@@ -807,6 +987,27 @@ router.get('/', async (req,res) => {
 
 
 return res.send(html);
+});
+
+router.get('/api/search-suggest', async (req, res) => {
+    const q = (req.query.q || '').trim();
+    if (q.length < 2) return res.json([]);
+    const api_key = process.env.TMDB_API_KEY;
+    try {
+        const r = await fetch(`https://api.themoviedb.org/3/search/multi?api_key=${api_key}&query=${encodeURIComponent(q)}&page=1&include_adult=false`);
+        const data = await r.json();
+        const items = (data.results || [])
+            .filter(x => x.media_type === 'movie' || x.media_type === 'tv')
+            .slice(0, 6)
+            .map(x => ({
+                id: x.id,
+                type: x.media_type,
+                title: x.media_type === 'movie' ? (x.title || '') : (x.name || ''),
+                year: (x.release_date || x.first_air_date || '').substring(0, 4),
+                poster: x.poster_path ? `https://image.tmdb.org/t/p/w92${x.poster_path}` : null
+            }));
+        res.json(items);
+    } catch { res.json([]); }
 });
 
 router.get('/api/backdrops', async (req, res) => {

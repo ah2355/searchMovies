@@ -299,17 +299,40 @@ router.get("/:type/:id", async (req, res) => {
     let relatedSeasons = []; // prequel/sequel TV entries from AniList relations (for season navigation)
 
     try {
-        const [detailsRes, providersRes, videoRes] = await Promise.all([
+        const [detailsRes, providersRes, videoRes, creditsRes, similarRes] = await Promise.all([
             fetch(`https://api.themoviedb.org/3/${type}/${id}?api_key=${api_key}&language=en-US&append_to_response=external_ids`, { headers: { 'Authorization': `Bearer ${process.env.TMDB_BEARER_TOKEN}` } }),
             fetch(`https://api.themoviedb.org/3/${type}/${id}/watch/providers?api_key=${api_key}&append_to_response=external_ids`, { headers: { 'Authorization': `Bearer ${process.env.TMDB_BEARER_TOKEN}` } }),
-            fetch(`https://api.themoviedb.org/3/${type}/${id}/videos?api_key=${api_key}`, { headers: { 'Authorization': `Bearer ${process.env.TMDB_BEARER_TOKEN}` } })
+            fetch(`https://api.themoviedb.org/3/${type}/${id}/videos?api_key=${api_key}`, { headers: { 'Authorization': `Bearer ${process.env.TMDB_BEARER_TOKEN}` } }),
+            fetch(`https://api.themoviedb.org/3/${type}/${id}/credits?api_key=${api_key}`, { headers: { 'Authorization': `Bearer ${process.env.TMDB_BEARER_TOKEN}` } }),
+            fetch(`https://api.themoviedb.org/3/${type}/${id}/recommendations?api_key=${api_key}&language=en-US&page=1`, { headers: { 'Authorization': `Bearer ${process.env.TMDB_BEARER_TOKEN}` } })
         ]);
 
         const data = await detailsRes.json();
         const providerData = await providersRes.json();
-
         const videoData = await videoRes.json();
+        const creditsData = await creditsRes.json();
+        const similarData = await similarRes.json();
         const trailer = videoData.results.find(v => v.type === "Trailer" && v.site === "YouTube");
+
+        const cast = (creditsData.cast || []).slice(0, 12);
+        const castHtml = cast.length ? cast.map(p => `
+            <div class="cast-card">
+                <img class="cast-photo" src="${p.profile_path ? `https://image.tmdb.org/t/p/w185${p.profile_path}` : `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'%3E%3Crect width='80' height='80' fill='%23222'/%3E%3Ccircle cx='40' cy='30' r='16' fill='%23555'/%3E%3Cellipse cx='40' cy='72' rx='26' ry='20' fill='%23555'/%3E%3C/svg%3E`}" alt="${p.name}" loading="lazy">
+                <p class="cast-name">${p.name}</p>
+                <p class="cast-char">${(p.character || '').split('/')[0].trim()}</p>
+            </div>`).join('') : '';
+
+        const similar = (similarData.results || []).filter(m => m.poster_path).slice(0, 12);
+        const similarHtml = similar.map(m => {
+            const t = m.title || m.name || '';
+            const yr = (m.release_date || m.first_air_date || '').substring(0, 4);
+            const mt = m.media_type || type;
+            return `<div class="similar-card" onclick="window.location.href='/media/${type}/${m.id}'">
+                <img src="https://image.tmdb.org/t/p/w342${m.poster_path}" alt="${t}" loading="lazy">
+                <p class="similar-title">${t}</p>
+                <p class="similar-year">${yr}</p>
+            </div>`;
+        }).join('');
 
         const [favorites, watchlist] = await Promise.all([
             fetchFavoritesFromDB(req.session.userId),
@@ -603,16 +626,32 @@ router.get("/:type/:id", async (req, res) => {
                         .details-hero {
                             position: relative;
                             width: 100%;
-                            min-height: calc(100vh - 70px);
-                            background: linear-gradient(rgba(0, 0, 0, 0.85), rgb(24 20 20 / 85%)), url('${backdropPath}');
-                            background-size: cover;
-                            background-position: center;
+                            min-height: 100vh;
                             display: flex;
-                            align-items: center;
+                            align-items: flex-end;
                             justify-content: center;
-                            padding: 40px 20px;
+                            padding: 0 0 60px;
                             color: white;
                             box-sizing: border-box;
+                            overflow: hidden;
+                        }
+                        .details-backdrop {
+                            position: absolute;
+                            inset: 0;
+                            background: url('${backdropPath}') center/cover no-repeat;
+                            z-index: 0;
+                        }
+                        .details-backdrop::after {
+                            content: '';
+                            position: absolute;
+                            inset: 0;
+                            background: linear-gradient(
+                                to bottom,
+                                rgba(0,0,0,0.1) 0%,
+                                rgba(0,0,0,0.4) 40%,
+                                rgba(0,0,0,0.92) 75%,
+                                rgb(35,35,35) 100%
+                            );
                         }
                     </style>
                     <script src="/misc/showModal.js"></script>
@@ -625,7 +664,7 @@ router.get("/:type/:id", async (req, res) => {
                             <span class="nav-title">SearchMovie</span>
                         </a>
                         <div class="nav-links">
-                            <button onclick="window.history.back()" class="nav-item" style="background:none; border:none; cursor:pointer;">
+                            <button onclick="history.length > 1 ? history.back() : window.location.href = '/'" class="nav-item" style="background:none; border:none; cursor:pointer;">
                                 <i class="fa-solid fa-left-long"></i> Back
                             </button>
                             <a href="/" class="nav-item">Home</a>
@@ -634,15 +673,22 @@ router.get("/:type/:id", async (req, res) => {
                     </nav>
 
                     <div class="details-hero">
+                        <div class="details-backdrop"></div>
                         <div class="details-container">
-                            <div class="details-left">
-                                <img src="${displayPoster}" alt="${displayTitle} Poster" class="details-poster">
-                            </div>
-
+                            <img src="${displayPoster}" alt="${displayTitle} Poster" class="details-poster">
                             <div class="details-right">
-                                <div style="display: flex; align-items: center; gap: 15px;">
-                                    <h1 class="details-title">${displayTitle} <span class="details-year">(${displayYear})</span></h1>
-                                    <div id="int-btns">
+                                <h1 class="details-title">${displayTitle} <span class="details-year">(${displayYear})</span></h1>
+                                ${tagline ? `<p class="details-tagline"><em>${tagline}</em></p>` : ''}
+
+                                <div class="stat-pills">
+                                    <span class="cert-badge ${certClass}">${ageCertificate}</span>
+                                    <span class="stat-pill"><i class="fa-solid fa-star" style="color:#fbbf24"></i> ${rating}</span>
+                                    <span class="stat-pill" id="rt-pill">🍅 <span id="rt-score-display">${rtScore}</span></span>
+                                    <span class="stat-pill"><i class="fa-solid fa-clock"></i> ${durationText}</span>
+                                    <span class="stat-pill">${displayYear}</span>
+                                    <span class="meta-badge">${type === 'movie' ? 'Movie' : 'TV Show'}</span>
+                                    ${isAnime ? animeGenres.map(g => `<span class="genre-pill">${g}</span>`).join('') : genresText.split(', ').filter(Boolean).map(g => `<span class="genre-pill">${g}</span>`).join('')}
+                                    <div id="int-btns" style="display:inline-flex;align-items:center;gap:6px;margin-left:4px;">
                                         <button class="watchlist-btn ${isWatchlisted}" onclick="addWatchlist(this, '${displayEscapedTitle}', '${displayYear}', '${id}', '${genresText.replace(/'/g, "\\'")}', '${rating}', '${displayPoster}', 'PG')">
                                             <span class="eye-icon"></span>
                                         </button>
@@ -652,74 +698,19 @@ router.get("/:type/:id", async (req, res) => {
                                     </div>
                                 </div>
 
-                                <div class="details-meta">
-                                    <span class="cert-badge ${certClass}">${ageCertificate}</span>
-                                    <span class="meta-badge">${type === 'movie' ? 'Movie' : 'TV Show'}</span>
-                                    <span>• ${dateString || "N/A"}</span>
-                                    ${isAnime ? "" : `<span>• ${genresText}</span>`}
-                                    ${isAnime ? `<div class="anime-tags">•
-                                        ${animeGenres.map(g => `<span class="badge" style="font-size: 1rem;">${g}</span>`).join(", ")}
-                                    </div>` : ""}
-                                    <span>• ${durationText}</span>
-                                </div>
-
-                                <div class="score-container">
-                                    <div class="score-circle"><img src="/images/star.png" id="star-icon">${rating}</div>
-                                    <span class="score-label">User Score</span>
-                                    <span class="score-label"><svg height="50px" width="30px" version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 65.636 65.636" xml:space="preserve" fill="#000000"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <g> <g> <path style="fill:#008218;" d="M33.487,26.488c0,0,2.424-16.17-12.936-20.617C20.553,5.871,18.127,21.636,33.487,26.488z"></path> </g> <g> <path style="fill:#008218;" d="M32.797,26.488c0,0-2.425-16.17,12.936-20.617C45.731,5.871,48.158,21.636,32.797,26.488z"></path> </g> <g> <path style="fill:#008218;" d="M33.307,24.332c0,0-10.406-12.61,0.47-24.332C33.777,0,43.976,12.264,33.307,24.332z"></path> </g> <g> <path style="fill:#FF4A44;" d="M62.433,38.623c0,14.919-13.26,27.013-29.616,27.013c-16.358,0-29.615-12.094-29.615-27.013 c0-11.921,7.154-21.461,19.236-23.671c5.822-1.064,10.379,3.492,10.379,3.492s4.197-4.353,9.762-3.58 C54.296,16.491,62.433,25.568,62.433,38.623z"></path> </g> </g> </g></svg>
-                                     RT:</span>
-                                    <span class="score-circle" id="rt-score-display">${rtScore}</span>
-                                </div>
-
-                                <p class="details-tagline"><em>${tagline}</em></p>
-
-                                <h3 class="overview-heading">Overview</h3>
                                 <p class="details-overview">${displayOverview}</p>
 
                                 ${relatedSeasonsHtml}
 
-                                ${trailer
-                ? `<button class="trailer-btn" onclick="openTrailer('${trailer.key}')"><i class="fa-solid fa-play"></i> Watch Trailer</button>`
-                : `<p>No trailer available.</p>`
-            }
-
-                                <a href="${isAnime && anilistId ? `/watch/anime/${anilistId}?tmdbId=${id}` : `/watch/${type}/${id}`}" class="trailer-btn"><i class="fa-solid fa-play"></i> Watch</a>
-
-                                <div id="trailerModal" class="modal">
-                                    <div class="modal-content">
-                                        <span class="close" onclick="closeTrailer()">&times;</span>
-                                        <div id="player"></div>
-                                    </div>
+                                <div class="action-btns">
+                                    <a href="${isAnime && anilistId ? `/watch/anime/${anilistId}?tmdbId=${id}` : `/watch/${type}/${id}`}" class="btn-watch"><i class="fa-solid fa-play"></i> Watch Now</a>
+                                    ${trailer
+                                        ? `<button class="btn-trailer" onclick="openTrailer('${trailer.key}')"><i class="fa-solid fa-film"></i> Trailer</button>`
+                                        : ''}
                                 </div>
 
-                                <div id="playerModal" class="modal">
-                                    <div class="modal-content" id="player-content">
-                                        <div id="player-title-box">
-                                            <h3 id="player-title">Now Playing</h3>
-                                            <button id="tv-fullscreen-btn" tabindex="0" onclick="requestPlayerFullscreen()">
-                                                <i class="fa-solid fa-expand"></i> Fullscreen
-                                            </button>
-                                            <span class="close" onclick="closePlayer()" id="closeBtn">&times;</span>
-                                        </div>
-
-                                        <div style="position:relative;">
-                                            <div id="vidlink-player"></div>
-                                        </div>
-
-                                        <div id="season-episode-picker" style="display:none;">
-                                            <div id="season-episode-box">
-                                                <select id="season-select" class="enhance-select" onchange="handleSeasonChange(this.value)">
-                                                </select>
-                                                <span style="color:#aaa; font-size:13px;" id="episode-count"></span>
-                                            </div>
-                                            <div id="episode-grid"></div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <h3 class="overview-heading">Where to Watch</h3>
-                                <div class="watch-providers">
-                                    ${watchHtml}
+                                <div class="providers-row">
+                                    ${providers.length ? `<span class="providers-label">Stream on</span>` + providers.map(p => `<img src="https://image.tmdb.org/t/p/w92${p.logo_path}" alt="${p.provider_name}" title="${p.provider_name}" class="provider-logo">`).join('') : `<span style="color:rgba(255,255,255,0.4);font-size:13px;">Not available on streaming in your region</span>`}
                                 </div>
 
                                 <label class="switch">
@@ -727,20 +718,56 @@ router.get("/:type/:id", async (req, res) => {
                                     <span class="slider"></span>
                                     <span class="card-side"></span>
                                 </label>
-
-                                <div class="secret-div" id="secretDiv" style="display: none;">
+                                <div class="secret-div" id="secretDiv" style="display:none;">
                                     <h3 class="overview-heading2">🤫 Revealed! You found the secret.</h3>
                                     <p>Here's some secret links</p>
-                                    <p>(Ad Blocker is recommended or use a browser that has one like: Brave)
+                                    <p>(Ad Blocker is recommended or use a browser that has one like: Brave)</p>
                                     <div id="links-container">
-                                        <ul class="secret-link-list">
-                                            ${secretLinksHtml}
-                                        </ul>
+                                        <ul class="secret-link-list">${secretLinksHtml}</ul>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
+
+                    <div id="trailerModal" class="modal">
+                        <div class="modal-content">
+                            <span class="close" onclick="closeTrailer()">&times;</span>
+                            <div id="player"></div>
+                        </div>
+                    </div>
+
+                    <div id="playerModal" class="modal">
+                        <div class="modal-content" id="player-content">
+                            <div id="player-title-box">
+                                <h3 id="player-title">Now Playing</h3>
+                                <button id="tv-fullscreen-btn" tabindex="0" onclick="requestPlayerFullscreen()">
+                                    <i class="fa-solid fa-expand"></i> Fullscreen
+                                </button>
+                                <span class="close" onclick="closePlayer()" id="closeBtn">&times;</span>
+                            </div>
+                            <div style="position:relative;"><div id="vidlink-player"></div></div>
+                            <div id="season-episode-picker" style="display:none;">
+                                <div id="season-episode-box">
+                                    <select id="season-select" class="enhance-select" onchange="handleSeasonChange(this.value)"></select>
+                                    <span style="color:#aaa; font-size:13px;" id="episode-count"></span>
+                                </div>
+                                <div id="episode-grid"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    ${castHtml ? `
+                    <section class="media-section">
+                        <h2 class="section-heading">Cast</h2>
+                        <div class="cast-row">${castHtml}</div>
+                    </section>` : ''}
+
+                    ${similarHtml ? `
+                    <section class="media-section">
+                        <h2 class="section-heading">More Like This</h2>
+                        <div class="similar-row">${similarHtml}</div>
+                    </section>` : ''}
                 </body>
                 <script>
                     const toggle = document.getElementById('secretToggle');
@@ -1412,6 +1439,18 @@ router.get("/:type/:id", async (req, res) => {
         
                 loadWatched();
                 resumeFromParam();
+
+                // Track recently viewed in localStorage
+                (function() {
+                    try {
+                        if (localStorage.getItem('recentlyViewedEnabled') === 'false') return;
+                        var item = { id: '${id}', type: '${type}', title: '${escapedTitle.replace(/\\/g, '\\\\')}', poster: '${posterPath}', year: '${year}' };
+                        var rv = JSON.parse(localStorage.getItem('recentlyViewed') || '[]');
+                        rv = rv.filter(function(x) { return !(x.id === item.id && x.type === item.type); });
+                        rv.unshift(item);
+                        localStorage.setItem('recentlyViewed', JSON.stringify(rv.slice(0, 16)));
+                    } catch(e) {}
+                })();
                 </script>
             </html>`);
 

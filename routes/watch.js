@@ -175,9 +175,27 @@ router.get('/anime/:anilistId', async (req, res) => {
         }
     })();
 
+    const _histStart = history.length;
+    history.replaceState({ watchPage: true }, '');
+
     function goBack() {
-        window.location.href = '${backFallback}';
+        const extra = history.length - _histStart;
+        if (extra > 0) {
+            window.addEventListener('popstate', function once() {
+                window.removeEventListener('popstate', once);
+                window.location.replace('${backFallback}');
+            });
+            history.go(-(extra + 1));
+        } else {
+            window.location.replace('${backFallback}');
+        }
     }
+
+    window.addEventListener('popstate', function(e) {
+        if (e.state && e.state.watchPage) {
+            window.location.replace('${backFallback}');
+        }
+    });
 
     function goFullscreen() {
         const iframe = document.getElementById('watch-iframe');
@@ -371,9 +389,27 @@ ${type === 'tv' ? `
         window.location.href = '/watch/' + mediaType + '/' + tmdbId + '?season=' + s + '&episode=1';
     }
 
+    const _histStart = history.length;
+    history.replaceState({ watchPage: true }, '');
+
     function goBack() {
-        window.location.href = '/media/${type}/${id}';
+        const extra = history.length - _histStart;
+        if (extra > 0) {
+            window.addEventListener('popstate', function once() {
+                window.removeEventListener('popstate', once);
+                window.location.replace('/media/${type}/${id}');
+            });
+            history.go(-(extra + 1));
+        } else {
+            window.location.replace('/media/${type}/${id}');
+        }
     }
+
+    window.addEventListener('popstate', function(e) {
+        if (e.state && e.state.watchPage) {
+            window.location.replace('/media/${type}/${id}');
+        }
+    });
 
     function goFullscreen() {
         const iframe = document.getElementById('watch-iframe');

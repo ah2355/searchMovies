@@ -11,6 +11,8 @@ router.get("/results", async (req, res) => {
     const searchLang = req.query.language || "";
     const allowAdult = req.session.nsfw === true;
     const nsfwFlag = allowAdult ? '?nsfw=true' : '';
+    const filterType = req.query.type || '';
+    const filterYear = req.query.year ? req.query.year.trim() : '';
     let html;
 
     if (!searchMovie) {
@@ -25,14 +27,23 @@ router.get("/results", async (req, res) => {
         let totalApprox = false;
 
         if (searchLang) {
-            const movieUrl = `https://api.themoviedb.org/3/discover/movie?api_key=${api_key}&with_original_language=${searchLang}&with_text_query=${encodeURIComponent(searchMovie)}&page=${page}&sort_by=popularity.desc&include_adult=${allowAdult}`;
-            const tvUrl = `https://api.themoviedb.org/3/discover/tv?api_key=${api_key}&with_original_language=${searchLang}&with_text_query=${encodeURIComponent(searchMovie)}&page=${page}&sort_by=popularity.desc&include_adult=${allowAdult}`;
+            const yearMovieParam = filterYear ? `&primary_release_year=${filterYear}` : '';
+            const yearTvParam = filterYear ? `&first_air_date_year=${filterYear}` : '';
+            const movieUrl = `https://api.themoviedb.org/3/discover/movie?api_key=${api_key}&with_original_language=${searchLang}&with_text_query=${encodeURIComponent(searchMovie)}&page=${page}&sort_by=popularity.desc&include_adult=${allowAdult}${yearMovieParam}`;
+            const tvUrl = `https://api.themoviedb.org/3/discover/tv?api_key=${api_key}&with_original_language=${searchLang}&with_text_query=${encodeURIComponent(searchMovie)}&page=${page}&sort_by=popularity.desc&include_adult=${allowAdult}${yearTvParam}`;
 
-            const [movieRes, tvRes] = await Promise.all([
-                fetch(movieUrl, { method: 'GET', headers: { accept: 'application/json' } }),
-                fetch(tvUrl, { method: 'GET', headers: { accept: 'application/json' } })
-            ]);
-            const [movieData, tvData] = await Promise.all([movieRes.json(), tvRes.json()]);
+            const wantMovie = !filterType || filterType === 'movie';
+            const wantTv = !filterType || filterType === 'tv';
+            const fetches = [];
+            if (wantMovie) fetches.push(fetch(movieUrl, { method: 'GET', headers: { accept: 'application/json' } }));
+            if (wantTv) fetches.push(fetch(tvUrl, { method: 'GET', headers: { accept: 'application/json' } }));
+            const responses = await Promise.all(fetches);
+            const jsons = await Promise.all(responses.map(r => r.json()));
+
+            let movieData = { results: [], total_pages: 1 }, tvData = { results: [], total_pages: 1 };
+            if (wantMovie && wantTv) { movieData = jsons[0]; tvData = jsons[1]; }
+            else if (wantMovie) { movieData = jsons[0]; }
+            else if (wantTv) { tvData = jsons[0]; }
 
             totalPages = Math.max(movieData.total_pages || 1, tvData.total_pages || 1);
             hasNext = page < totalPages;
@@ -70,6 +81,11 @@ router.get("/results", async (req, res) => {
                 let filteredThisPage = 0;
                 for (const item of raw) {
                     if (item.media_type !== "movie" && item.media_type !== "tv") continue;
+                    if (filterType && item.media_type !== filterType) continue;
+                    if (filterYear) {
+                        const d = item.release_date || item.first_air_date || '';
+                        if (!d.startsWith(filterYear)) continue;
+                    }
                     filteredThisPage++;
                     const key = item.media_type + ':' + item.id;
                     if (seen.has(key)) continue;
@@ -125,6 +141,8 @@ router.get("/results", async (req, res) => {
                 <link rel="apple-touch-icon" href="https://searchmovie.win/images/icon.png">
                 <link rel="stylesheet" href="/css/style.css">
                 <link rel="icon" type="image/x-icon" href="/images/icon.png">
+                <link rel="manifest" href="/manifest.json">
+                <meta name="theme-color" content="#e50914">
                 <link rel="preconnect" href="https://image.tmdb.org">
                 <link rel="preconnect" href="https://fonts.googleapis.com">
                 <link rel="preconnect" href="https://cdnjs.cloudflare.com">
@@ -138,15 +156,44 @@ router.get("/results", async (req, res) => {
                 <nav class="navbar2">
                     <span class="nav-title2">Search Results</span>
                     <div class="nav-links2">
+                    <form id="searchForm" action="/results" method="get" style="position:relative;">
+                        <input type="text" name="q" id="movieName" placeholder="Search movies & shows..." value="${searchMovie.replace(/"/g, '&quot;')}">
+                        <button id="searchBtn"><i class="fa-solid fa-magnifying-glass"></i></button>
+                        <div id="suggestionsBox"></div>
+                    </form>
                     <a id="elemNav" href="/" class="nav-item">Home</a>
                     <a href="/favorites" class="nav-item">Favorites</a>
-                    <form id="searchForm" action="/results" method="get">
-                        <input type="text" name="q" id="movieName" placeholder="Search" value="${searchMovie.replace(/"/g, '&quot;')}">
-                        <button id="searchBtn"><i class="fa-solid fa-magnifying-glass"></i></button>
-                    </form>
                     </div>
                 </nav>
-                <h1 style="font-size: 30px; margin-top: 60px;">Search results for "${searchMovie.replace(/"/g, '&quot;')}"</h1>
+                <div class="results-header">
+                    <h1 class="results-title">Results for <span>"${searchMovie.replace(/"/g, '&quot;')}"</span></h1>
+                    <form class="results-filters" action="/results" method="get" id="filterForm">
+                        <input type="hidden" name="q" value="${searchMovie.replace(/"/g, '&quot;')}">
+                        <div class="filter-type-group">
+                            <button type="submit" name="type" value="" class="filter-type-btn${!filterType ? ' active' : ''}">All</button>
+                            <button type="submit" name="type" value="movie" class="filter-type-btn${filterType === 'movie' ? ' active' : ''}">Movies</button>
+                            <button type="submit" name="type" value="tv" class="filter-type-btn${filterType === 'tv' ? ' active' : ''}">TV Shows</button>
+                        </div>
+                        <div class="filter-row-2">
+                            <input type="number" name="year" class="filter-year-input" placeholder="Year" min="1900" max="2030" value="${filterYear}" title="Filter by release year">
+                            <select name="language" class="filter-lang-select" onchange="this.form.submit()" title="Filter by language">
+                                <option value="">All Languages</option>
+                                <option value="en"  ${searchLang === 'en'  ? 'selected' : ''}>English</option>
+                                <option value="hi"  ${searchLang === 'hi'  ? 'selected' : ''}>Hindi</option>
+                                <option value="ta"  ${searchLang === 'ta'  ? 'selected' : ''}>Tamil</option>
+                                <option value="te"  ${searchLang === 'te'  ? 'selected' : ''}>Telugu</option>
+                                <option value="kn"  ${searchLang === 'kn'  ? 'selected' : ''}>Kannada</option>
+                                <option value="bn"  ${searchLang === 'bn'  ? 'selected' : ''}>Bangla</option>
+                                <option value="ko"  ${searchLang === 'ko'  ? 'selected' : ''}>Korean</option>
+                                <option value="zh"  ${searchLang === 'zh'  ? 'selected' : ''}>Chinese</option>
+                                <option value="ja"  ${searchLang === 'ja'  ? 'selected' : ''}>Japanese</option>
+                                <option value="es"  ${searchLang === 'es'  ? 'selected' : ''}>Spanish</option>
+                                <option value="fr"  ${searchLang === 'fr'  ? 'selected' : ''}>French</option>
+                            </select>
+                            ${filterYear || filterType || searchLang ? `<a href="/results?q=${encodeURIComponent(searchMovie)}" class="filter-clear">✕ Clear</a>` : ''}
+                        </div>
+                    </form>
+                </div>
                 <div class="movie-grid">
         `;
 
@@ -228,9 +275,9 @@ router.get("/results", async (req, res) => {
         html += `
             </div>
             <div id="cntrl-btn">
-                ${page > 1 ? `<a href="/results?q=${encodeURIComponent(searchMovie)}&page=${page - 1}${searchLang ? '&language=' + encodeURIComponent(searchLang) : ''}" id="showLess">Previous</a>` : ''}
+                ${page > 1 ? `<a href="/results?q=${encodeURIComponent(searchMovie)}&page=${page - 1}${searchLang ? '&language=' + encodeURIComponent(searchLang) : ''}${filterType ? '&type=' + filterType : ''}${filterYear ? '&year=' + filterYear : ''}" id="showLess">Previous</a>` : ''}
                 <span id="txtPage">Page ${page} of ${totalApprox ? '~' : ''}${totalPages}</span>
-                ${hasNext ? `<a href="/results?q=${encodeURIComponent(searchMovie)}&page=${page + 1}${searchLang ? '&language=' + encodeURIComponent(searchLang) : ''}" id="showMore">Next</a>` : ''}
+                ${hasNext ? `<a href="/results?q=${encodeURIComponent(searchMovie)}&page=${page + 1}${searchLang ? '&language=' + encodeURIComponent(searchLang) : ''}${filterType ? '&type=' + filterType : ''}${filterYear ? '&year=' + filterYear : ''}" id="showMore">Next</a>` : ''}
             </div>
             <script>
                 const isGuest = ${isGuest};
@@ -265,6 +312,79 @@ router.get("/results", async (req, res) => {
                 window.addEventListener('pageshow', function(event) {
                     if (event.persisted) window.location.reload();
                 });
+
+                (function() {
+                    var input = document.getElementById('movieName');
+                    var box = document.getElementById('suggestionsBox');
+                    if (!input || !box) return;
+                    var timer, activeIdx = -1;
+
+                    function hideSuggestions() {
+                        box.style.display = 'none';
+                        box.innerHTML = '';
+                        activeIdx = -1;
+                    }
+
+                    function showSuggestions(items) {
+                        if (!items.length) { hideSuggestions(); return; }
+                        box.innerHTML = items.map(function(item) {
+                            var img = item.poster
+                                ? '<img src="' + item.poster + '" alt="" class="suggestion-img">'
+                                : '<div class="suggestion-img suggestion-no-img"></div>';
+                            var year = item.year ? ' (' + item.year + ')' : '';
+                            var badge = item.type === 'movie' ? 'Movie' : 'TV';
+                            return '<div class="suggestion-item" data-href="/media/' + item.type + '/' + item.id + '">'
+                                + img
+                                + '<div class="suggestion-text">'
+                                + '<span class="suggestion-title">' + item.title.replace(/</g,'&lt;') + year + '</span>'
+                                + '<span class="suggestion-badge">' + badge + '</span>'
+                                + '</div></div>';
+                        }).join('');
+                        box.style.display = 'block';
+                        activeIdx = -1;
+                        box.querySelectorAll('.suggestion-item').forEach(function(el) {
+                            el.addEventListener('mousedown', function(e) {
+                                e.preventDefault();
+                                window.location.href = el.getAttribute('data-href');
+                            });
+                        });
+                    }
+
+                    input.addEventListener('input', function() {
+                        clearTimeout(timer);
+                        var q = input.value.trim();
+                        if (q.length < 2) { hideSuggestions(); return; }
+                        timer = setTimeout(async function() {
+                            try {
+                                var r = await fetch('/api/search-suggest?q=' + encodeURIComponent(q));
+                                showSuggestions(await r.json());
+                            } catch(e) {}
+                        }, 220);
+                    });
+
+                    input.addEventListener('keydown', function(e) {
+                        var items = box.querySelectorAll('.suggestion-item');
+                        if (!items.length) return;
+                        if (e.key === 'ArrowDown') {
+                            e.preventDefault();
+                            activeIdx = Math.min(activeIdx + 1, items.length - 1);
+                            items.forEach(function(el, i) { el.classList.toggle('suggestion-active', i === activeIdx); });
+                        } else if (e.key === 'ArrowUp') {
+                            e.preventDefault();
+                            activeIdx = Math.max(activeIdx - 1, -1);
+                            items.forEach(function(el, i) { el.classList.toggle('suggestion-active', i === activeIdx); });
+                        } else if (e.key === 'Enter' && activeIdx >= 0) {
+                            e.preventDefault();
+                            window.location.href = items[activeIdx].getAttribute('data-href');
+                        } else if (e.key === 'Escape') {
+                            hideSuggestions();
+                        }
+                    });
+
+                    document.addEventListener('click', function(e) {
+                        if (!box.contains(e.target) && e.target !== input) hideSuggestions();
+                    });
+                })();
             </script>
             </body>
             </html>

@@ -845,35 +845,65 @@ button{
 
 #suggestionsBox {
   position: absolute;
-  top: 100%;
+  top: calc(100% + 6px);
   left: 0;
   width: 100%;
-  background: #000;
-  border: 1px none #333;
+  min-width: 300px;
+  background: #141414;
+  border: 1px solid rgba(255,255,255,0.1);
   z-index: 9999;
-  margin-top: 10px;
-  border-radius: 0 0 8px 8px;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.5);
-  overflow: auto;
-  max-height: 300px;
+  border-radius: 10px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.7);
+  overflow: hidden;
+  display: none;
 }
 
 .suggestion-item {
   display: flex;
   align-items: center;
-  padding: 12px;
+  gap: 12px;
+  padding: 9px 12px;
   cursor: pointer;
-  color: white;
-  transition: background 0.2s;
+  color: #ddd;
+  transition: background 0.15s;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.suggestion-item:last-child { border-bottom: none; }
+
+.suggestion-img {
+  width: 36px;
+  height: 54px;
+  object-fit: cover;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+.suggestion-no-img {
+  background: #2a2a2a;
 }
 
-.suggestion-img{
-  height: 10px;
+.suggestion-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.suggestion-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.suggestion-badge {
+  font-size: 11px;
+  color: #888;
 }
 
-.suggestion-item:hover {
-  background: #21d07a;
-  color: black;
+.suggestion-item:hover,
+.suggestion-active {
+  background: rgba(229, 9, 20, 0.15);
+  color: #fff;
 }
 
 /* ── Featured Spotlight ──────────────────────────────── */
@@ -1114,6 +1144,11 @@ button{
   font-weight: 700;
   color: #ffffff;
   letter-spacing: -0.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  flex-shrink: 1;
 }
 
 .nav-links2{
@@ -1154,12 +1189,14 @@ button{
 
 #searchForm #movieName {
   border-radius: 8px;
-  padding: 8px 12px;
+  padding: 8px 14px;
   border: 1px solid rgba(255,255,255,0.15);
   background: rgba(0,0,0,0.4);
   color: white;
   font-size: 14px;
   outline: none;
+  width: 260px;
+  max-width: 40vw;
 }
 
 #searchForm #movieName:focus {
@@ -2320,6 +2357,44 @@ button{
     padding: 10px;
     width: 310px;
   }
+
+  /* Search results page — mobile */
+  .results-header {
+    margin-top: 12px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 0 12px 10px;
+  }
+  .results-title {
+    font-size: 16px;
+  }
+  .results-filters {
+    width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .filter-type-group {
+    width: 100%;
+  }
+  .filter-type-btn {
+    flex: 1;
+    text-align: center;
+    padding: 7px 0;
+  }
+  .filter-row-2 {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+  }
+  .filter-year-input {
+    width: 100px;
+    flex-shrink: 0;
+  }
+  .filter-lang-select {
+    flex: 1;
+  }
 }
 
 /* Custom Modal */
@@ -2506,4 +2581,239 @@ select.enhance-select {
 .custom-select-option.selected {
   color: #e50914;
   font-weight: 600;
+}
+
+/* ── Search Results filter bar ─────────────────────────── */
+.results-header {
+  margin-top: 76px;
+  padding: 0 20px 12px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+}
+.results-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #fff;
+  margin: 0;
+}
+.results-title span {
+  color: #aaa;
+  font-weight: 400;
+}
+.results-filters {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.filter-type-group {
+  display: flex;
+  background: rgba(255,255,255,0.06);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.filter-type-btn {
+  background: none;
+  border: none;
+  color: #aaa;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.filter-type-btn:hover { background: rgba(255,255,255,0.08); color: #fff; }
+.filter-type-btn.active { background: #e50914; color: #fff; }
+.filter-year-input,
+.filter-lang-select {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 13px;
+  padding: 6px 10px;
+  outline: none;
+  font-family: inherit;
+  cursor: pointer;
+}
+.filter-year-input { width: 80px; }
+.filter-lang-select { appearance: none; padding-right: 28px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; }
+.filter-lang-select option { background: #1a1a1a; color: #fff; }
+.filter-year-input::placeholder { color: #666; }
+.filter-year-input:focus,
+.filter-lang-select:focus { border-color: rgba(229,9,20,0.5); }
+.filter-row-2 {
+  display: contents;
+}
+.filter-clear {
+  color: #888;
+  font-size: 12px;
+  text-decoration: none;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: color 0.15s, background 0.15s;
+}
+.filter-clear:hover { color: #fff; background: rgba(229,9,20,0.2); }
+
+/* ── 404 page ──────────────────────────────────────────── */
+.page-404 {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 20px;
+  background: #141414;
+  color: #fff;
+}
+.page-404-number {
+  font-size: clamp(80px, 18vw, 180px);
+  font-weight: 900;
+  line-height: 1;
+  background: linear-gradient(135deg, #e50914 0%, #ff6b6b 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0;
+}
+.page-404-subtitle {
+  font-size: clamp(18px, 4vw, 28px);
+  font-weight: 600;
+  margin: 16px 0 8px;
+  color: #fff;
+}
+.page-404-text {
+  font-size: 15px;
+  color: #888;
+  margin: 0 0 32px;
+  max-width: 380px;
+}
+.page-404-search {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  width: 100%;
+  max-width: 380px;
+}
+.page-404-search input {
+  flex: 1;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 10px;
+  color: #fff;
+  font-size: 15px;
+  padding: 12px 16px;
+  outline: none;
+}
+.page-404-search input:focus { border-color: rgba(229,9,20,0.6); }
+.page-404-search button {
+  background: #e50914;
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  padding: 12px 20px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.page-404-search button:hover { background: #c0070f; }
+.page-404-home {
+  color: #888;
+  font-size: 14px;
+  text-decoration: none;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 8px;
+  padding: 8px 20px;
+  transition: color 0.2s, border-color 0.2s;
+}
+.page-404-home:hover { color: #fff; border-color: rgba(255,255,255,0.4); }
+
+/* ── Recently Viewed row ──────────────────────────────── */
+#recently-viewed-wrap { display: none; }
+.rv-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.rv-header h2 { margin-top: 0; margin-bottom: 0; }
+.rv-toggle-btn { margin-top: 2px; }
+.rv-toggle-btn {
+  background: none;
+  border: 1px solid rgba(255,255,255,0.15);
+  color: #888;
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+  font-family: inherit;
+}
+.rv-toggle-btn:hover {
+  border-color: #e50914;
+  color: #e50914;
+}
+.rv-grid {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+  padding: 10px 20px;
+  margin-top: 10px;
+  width: 100%;
+}
+.rv-grid::-webkit-scrollbar { display: none; }
+.rv-card {
+  flex: 0 0 160px;
+  cursor: pointer;
+  border: 1px solid rgba(111,99,99,0.5);
+  border-radius: 15px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: border-color 0.2s, transform 0.2s;
+}
+.rv-card:hover {
+  border-color: rgba(229,9,20,0.5);
+  transform: scale(1.03);
+}
+.rv-poster {
+  position: relative;
+  width: 100%;
+  height: 240px;
+  overflow: hidden;
+}
+.rv-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.2s;
+}
+.rv-card:hover img {
+  transform: scale(1.06);
+}
+.rv-info {
+  padding: 8px 10px 10px;
+}
+.rv-card-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #eee;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0 0 2px;
+}
+.rv-card-year {
+  font-size: 11px;
+  color: #777;
+  margin: 0;
 }

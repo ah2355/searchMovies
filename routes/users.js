@@ -5,14 +5,28 @@ const Favorite = require("../models/Favorite");
 const Watchlist = require("../models/Watchlist");
 const WatchProgress = require("../models/WatchProgress");
 
-router.get("/login", (req,res) => {
+router.get("/login", async (req, res) => {
     if (req.session && req.session.userId) {
+        const userId = req.session.userId;
         const username = req.session.username || 'User';
-        let displayName = (username !== "Guest" && username.includes('@')) 
-        ? username.split('@')[0] 
-        : username;
+        let displayName = (username !== "Guest" && username.includes('@'))
+            ? username.split('@')[0]
+            : username;
         displayName = displayName.charAt(0).toUpperCase() + displayName.substring(1);
         const initial = username.charAt(0).toUpperCase();
+
+        const [user, favCount, watchlistCount, watchedMovies, watchedShows] = await Promise.all([
+            User.findById(userId).select('createdAt').lean(),
+            Favorite.countDocuments({ user: userId }),
+            Watchlist.countDocuments({ user: userId }),
+            WatchProgress.countDocuments({ user: userId, mediaType: 'movie' }),
+            WatchProgress.countDocuments({ user: userId, mediaType: 'tv' })
+        ]);
+
+        const joinDate = user?.createdAt
+            ? new Date(user.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+            : 'Unknown';
+
         return res.send(`
         <!DOCTYPE html>
         <html>
@@ -23,7 +37,44 @@ router.get("/login", (req,res) => {
                 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
                 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
                 <link rel="icon" type="image/x-icon" href="/images/icon.png">
-                <title>My Account - SearchMovie</title>
+                <link rel="manifest" href="/manifest.json">
+                <meta name="theme-color" content="#e50914">
+                <title>My Account — SearchMovie</title>
+                <style>
+                    .profile-stats {
+                        display: grid;
+                        grid-template-columns: repeat(2, 1fr);
+                        gap: 12px;
+                        margin: 24px 0;
+                        width: 100%;
+                        max-width: 280px;
+                    }
+                    .stat-card {
+                        background: rgba(255,255,255,0.05);
+                        border: 1px solid rgba(255,255,255,0.08);
+                        border-radius: 12px;
+                        padding: 14px 12px;
+                        text-align: center;
+                    }
+                    .stat-num {
+                        font-size: 26px;
+                        font-weight: 700;
+                        color: #e50914;
+                        display: block;
+                        line-height: 1;
+                    }
+                    .stat-label {
+                        font-size: 11px;
+                        color: #888;
+                        margin-top: 4px;
+                        display: block;
+                    }
+                    .profile-join {
+                        font-size: 12px;
+                        color: #555;
+                        margin: -8px 0 20px;
+                    }
+                </style>
             </head>
             <body class="loginBody">
                 <nav class="navbar">
@@ -36,10 +87,29 @@ router.get("/login", (req,res) => {
                 </nav>
 
                 <div class="auth-wrapper">
-                    <div id="loginContainer" style="text-align:center;">
+                    <div id="loginContainer" style="text-align:center; display:flex; flex-direction:column; align-items:center;">
                         <div class="profile-avatar">${initial}</div>
                         <p class="profile-username">${displayName}</p>
-                        <p class="profile-label">SearchMovie Account</p>
+                        <p class="profile-join">Member since ${joinDate}</p>
+
+                        <div class="profile-stats">
+                            <div class="stat-card">
+                                <span class="stat-num">${favCount}</span>
+                                <span class="stat-label">Favourites</span>
+                            </div>
+                            <div class="stat-card">
+                                <span class="stat-num">${watchlistCount}</span>
+                                <span class="stat-label">Watchlist</span>
+                            </div>
+                            <div class="stat-card">
+                                <span class="stat-num">${watchedMovies}</span>
+                                <span class="stat-label">Movies Watched</span>
+                            </div>
+                            <div class="stat-card">
+                                <span class="stat-num">${watchedShows}</span>
+                                <span class="stat-label">Shows Watched</span>
+                            </div>
+                        </div>
 
                         <div class="profile-actions">
                             <a href="/" class="profile-btn profile-btn-primary">
@@ -92,7 +162,7 @@ router.get("/login", (req,res) => {
             </body>
         </html>
         `);
-    } 
+    }
 
     res.send(`<!DOCTYPE html>
         <html>
