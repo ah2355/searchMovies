@@ -673,6 +673,8 @@ h2 {
   max-width: 100%;
   display: flex;
   justify-content: center;
+  border-radius: 12px;
+  overflow: hidden;
 }
 
 .oauth-apple-btn {

@@ -287,7 +287,7 @@ router.get("/login", async (req, res) => {
                                     });
                                     google.accounts.id.renderButton(
                                         document.getElementById('google-btn-container'),
-                                        { theme: 'outline', size: 'large', width: 300, text: 'continue_with', shape: 'rectangular', logo_alignment: 'left' }
+                                        { theme: 'filled_black', size: 'large', width: 300, text: 'continue_with', shape: 'rectangular', logo_alignment: 'left' }
                                     );
                                 } else {
                                     setTimeout(initGoogle, 100);
@@ -506,7 +506,7 @@ router.get("/register", (req, res) => {
                                     });
                                     google.accounts.id.renderButton(
                                         document.getElementById('google-btn-container'),
-                                        { theme: 'outline', size: 'large', width: 300, text: 'continue_with', shape: 'rectangular', logo_alignment: 'left' }
+                                        { theme: 'filled_black', size: 'large', width: 300, text: 'continue_with', shape: 'rectangular', logo_alignment: 'left' }
                                     );
                                 } else {
                                     setTimeout(initGoogle, 100);
