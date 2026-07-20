@@ -91,6 +91,14 @@ router.get('/settings', (req, res) => {
         <span></span>
     </nav>
 
+    <div class="sp-mobile-tabs">
+        <button class="sp-mobile-tab" data-tab="account">Account</button>
+        <button class="sp-mobile-tab" data-tab="appearance">Appearance</button>
+        <button class="sp-mobile-tab" data-tab="homepage">Home Page</button>
+        <button class="sp-mobile-tab" data-tab="content">Content</button>
+        <button class="sp-mobile-tab" data-tab="status">Status</button>
+    </div>
+
     <div class="sp-layout">
         <aside class="sp-sidebar">
             <a href="#account"    class="sp-sidelink" data-tab="account"><i class="fa-solid fa-user"></i> Account</a>
@@ -341,12 +349,16 @@ router.get('/settings', (req, res) => {
 
         // Tab switching
         var sideLinks = document.querySelectorAll('.sp-sidelink[data-tab]');
+        var mobileTabs = document.querySelectorAll('.sp-mobile-tab[data-tab]');
         function showTab(id) {
             document.querySelectorAll('.sp-card').forEach(function(s) {
                 s.classList.toggle('sp-active', s.id === id);
             });
             sideLinks.forEach(function(l) {
                 l.classList.toggle('active', l.getAttribute('data-tab') === id);
+            });
+            mobileTabs.forEach(function(t) {
+                t.classList.toggle('active', t.getAttribute('data-tab') === id);
             });
             history.replaceState(null, '', '#' + id);
             window.scrollTo(0, 0);
@@ -355,6 +367,11 @@ router.get('/settings', (req, res) => {
             l.addEventListener('click', function(e) {
                 e.preventDefault();
                 showTab(l.getAttribute('data-tab'));
+            });
+        });
+        mobileTabs.forEach(function(t) {
+            t.addEventListener('click', function() {
+                showTab(t.getAttribute('data-tab'));
             });
         });
         var initial = (location.hash || '#account').slice(1);

@@ -246,12 +246,44 @@ body {
 }
 .svc-last-checked { font-size: 12px; color: #555; }
 
-/* Mobile */
+/* Mobile tab strip */
+.sp-mobile-tabs {
+    display: none;
+}
 @media (max-width: 640px) {
     .sp-sidebar { display: none; }
-    .sp-layout { margin: 16px auto; gap: 0; }
+    .sp-layout { margin: 8px auto; gap: 0; }
     .sp-card { border-radius: 12px; padding: 20px; }
     .sp-card-title { font-size: 16px; }
     .sp-desktop-only { display: none !important; }
     .settings-swatches { gap: 8px; }
+
+    .sp-mobile-tabs {
+        display: flex;
+        overflow-x: auto;
+        gap: 6px;
+        padding: 10px 16px;
+        background: rgba(13,13,13,0.85);
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+    .sp-mobile-tabs::-webkit-scrollbar { display: none; }
+    .sp-mobile-tab {
+        flex-shrink: 0;
+        padding: 7px 14px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 500;
+        color: #aaa;
+        background: rgba(255,255,255,0.06);
+        border: none;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: background 0.15s, color 0.15s;
+    }
+    .sp-mobile-tab.active {
+        background: var(--accent, #e50914);
+        color: #fff;
+    }
 }
