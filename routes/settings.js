@@ -82,6 +82,7 @@ router.get('/settings', (req, res) => {
     <link rel="stylesheet" href="/css/settings-page.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="icon" type="image/x-icon" href="/images/icon.png">
+    <style>.sp-mobile-tabs{display:none}.sp-card{display:none}</style>
     <script>(function(){var r=document.documentElement;var c=localStorage.getItem('settingsBgColor');if(c)r.style.setProperty('--sm-bg',c);var a=localStorage.getItem('settingsAccent');if(a)r.style.setProperty('--accent',a);var s=localStorage.getItem('settingsCardSize');if(s){var sizes={compact:'120px',normal:'160px',large:'200px'};var h={compact:'180px',normal:'240px',large:'300px'};if(sizes[s]){r.style.setProperty('--card-w',sizes[s]);r.style.setProperty('--card-h',h[s]);}}})();</script>
 </head>
 <body>
